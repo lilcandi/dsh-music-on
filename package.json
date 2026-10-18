@@ -1,6 +1,6 @@
 {
   "name": "dsh-music-on",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "type": "module",
   "description": "A music dock for the DSH Web GUI: a draggable player in the bottom-right corner with a live blue-white spectrum, drag-and-drop local audio, Bilibili / NetEase Cloud Music / QQ Music playlist links, and seven built-in CC0 soundscapes.",
@@ -46,6 +46,7 @@
     "client.js",
     "src",
     "presets",
+    "docs",
     "cordis.patch.yml",
     "screenshots.json",
     "README.md",
@@ -60,7 +61,7 @@
   "dsh": {
     "id": "dsh-music-on",
     "name": "音乐台",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "compatibility": {
       "dsh": ">=0.2.0-rc.1 <0.2.1-0 || >=0.2.1-0 <0.3.0-0",
       "dshReleases": {
