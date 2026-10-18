@@ -122,10 +122,12 @@ dsh-music-on/
 ├── presets/                # 预置音景：manifest.json + 7 个 *.wav（CC0 原创合成）
 ├── scripts/                # 构建与自检（不进安装位置）
 │   ├── build-client.mjs        # esbuild 打 client.js
-│   ├── check-install.mjs       # 安装位置 19 项自检
+│   ├── check-install.mjs       # 安装位置 20 项自检
 │   ├── check-spectrum.mjs      # 频谱绘制 27 项自检
 │   ├── simulate-browser.mjs    # vm 里真跑 client.js，验证槽位注册与首渲染
 │   ├── simulate-drag.mjs       # 拖动通道（window 监听）行为验证
+│   ├── submit-marketplace.ps1  # 市场投稿体检 + 开 PR（见下）
+│   ├── shoot-screenshots.py    # Playwright 拍商店截图，顺带当视觉回归
 │   └── verify-*.mjs            # 实网端到端自检（B站 / 平台直链）
 └── src/
     ├── index.js            # 宿主半边入口：建票据单例、挂三条路由
@@ -394,6 +396,38 @@ c.connection.fetch.register({
 
 封面（纯 https 图床外链，不带凭据、不会过期）可以落盘；但**绝不序列化 Blob / objectURL**（本地拖入的文件刷新后必然是死地址）。
 
+## 发布到插件市场
+
+`dsh-market` **不是投稿对象**。它的 README 写得很直白：目录只有一个来源——[`awesome-dsh-plugin`](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 这个精选清单，站点与市场都从它派生（市场每次打开时实时拉 `awesome-dsh-plugin.com/plugins.json`）。所以**只往上游提一个 PR，加一个文件**：
+
+```
+data/plugins/lilcandi__dsh-music-on.yml
+```
+
+条目源文件在 `docs/marketplace-entry.yml`，四件事都必须对上：
+
+- `url` 与 `name` 必须逐字指向本仓库（`name` 是链接文字，写错别的仓库名会被判「label 与链接不符」直接打回）。
+- `category: ui`。**不要填 `theme`** —— theme 类会被自动塞进 dsh-market 的主题 Tab（一键安装/切换/卸载），本插件不是皮肤。
+- `description.en` 必填且只能一行；`zh` 可选但缺失要维护者补。含 `: `（冒号+空格）的整行**必须加引号**，否则 YAML 会解析成嵌套映射——这是上游最常见的坏法，校验器会专门提示。
+- `tarball` 用**不带版本号**的资产名 + `latest/download/`：`.../releases/latest/download/dsh-music-on.tgz`。`latest` 在请求时解析，但**文件名是照字面取的**，资产名一旦带版本号，下次发版就静默 404。因此每个 release 都必须上传一个名字字面等于 `dsh-music-on.tgz` 的资产。
+
+硬门槛（CI 按序查，`scripts/check-submission.mjs`）：每个 PR ≤3 条 → 目标仓库 `package.json` 声明 **`dsh.bundle`**（只声明 `dsh.client` 必失败）→ **仓库创建满 1 天**（无提交数门槛）→ `awesome-lint` 与站点构建。
+
+两次一模一样的 README **不要手工改**，它们是生成产物，PR 里动了会撞到别人。
+
+体检与提交：
+
+```pwsh
+pwsh -File scripts\submit-marketplace.ps1          # 只体检
+pwsh -File scripts\submit-marketplace.ps1 -Submit  # 体检通过就开 PR
+```
+
+这个脚本编码了三件踩过的事：
+
+1. 本机 `hosts` 把所有 GitHub 域名指向 `127.0.0.1`，所以 curl 必须 `--resolve` 钉真实 IP；`Invoke-RestMethod` 走 `127.0.0.1:7897` 代理。
+2. 分支内容用 **Git Data API（tree → commit → ref）** 直接建，不用 `git push`。原因是「基于上游最新 `main` 建分支」必然带上上游改过的 `.github/workflows/*`，而本机 PAT 只有 `repo` scope，`push` 会被 `refusing to allow a Personal Access Token to create or update workflow` 顶回来。走 API 建提交不产生 workflow 变更，权限问题自然不存在。
+3. 仓库年龄必须从**原始 JSON 字面值**取：`ConvertFrom-Json` 会把 `created_at` 转成 `Kind=Local` 的 `DateTime`，再 `ToUniversalTime()` 就二次换算、整体偏移 8 小时——真实 3 小时会算成 11 小时，「还差 21 小时」会显示成「还差 13 小时」。脚本用正则取 ISO 串再交给 `DateTimeOffset`。
+
 ---
 
 ## 自检
@@ -419,6 +453,9 @@ node scripts\verify-platform.mjs
 
 # 5) 安装位置自检
 node scripts\check-install.mjs
+
+# 6) 频谱几何自检（27 项）
+node scripts\check-spectrum.mjs
 ```
 
 **同步到安装位置必须逐文件 `Copy-Item` + `Get-FileHash` 比对**：`file:` 依赖在 node_modules 下是**实体目录副本**（不是 junction/symlink），`Copy-Item -Recurse` 会造出 `src\src`、`presets\presets` 嵌套重复。改完纯客户端只需 `Ctrl+F5`；改了 `src/host/*` 必须重启 DSH。
