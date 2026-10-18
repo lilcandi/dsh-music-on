@@ -1,0 +1,84 @@
+{
+  "name": "dsh-music-on",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "A music dock for the DSH Web GUI: a draggable player in the bottom-right corner with a live blue-white spectrum, drag-and-drop local audio, Bilibili / NetEase Cloud Music / QQ Music playlist links, and seven built-in CC0 soundscapes.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "dsh-plugin-ui",
+    "music",
+    "player",
+    "audio",
+    "spectrum",
+    "visualizer",
+    "bilibili",
+    "netease-cloud-music",
+    "qqmusic",
+    "lofi",
+    "white-noise",
+    "soundscape",
+    "web-ui"
+  ],
+  "homepage": "https://github.com/lilcandi/dsh-music-on#readme",
+  "bugs": {
+    "url": "https://github.com/lilcandi/dsh-music-on/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lilcandi/dsh-music-on.git"
+  },
+  "author": "lilcandi",
+  "license": "MIT",
+  "engines": {
+    "dsh": ">=0.2.0-rc.1 <0.2.1-0 || >=0.2.1-0 <0.3.0-0"
+  },
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "src",
+    "presets",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "test": "node --test test/*.test.mjs test/*.test.js",
+    "check": "node scripts/check-install.mjs && node scripts/check-spectrum.mjs && node scripts/simulate-browser.mjs"
+  },
+  "dsh": {
+    "id": "dsh-music-on",
+    "name": "音乐台",
+    "version": "0.1.0",
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1 <0.2.1-0 || >=0.2.1-0 <0.3.0-0",
+      "dshReleases": {
+        "0.2.1-rc.2": "compatible"
+      }
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.2.0-rc.1 <0.2.1-0 || >=0.2.1-0 <0.3.0-0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,20 @@
+node_modules/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+
+# 本地探针用的真 react + happy-dom，不属于插件产物
+.probe-react/
+
+# 编辑器 / 系统噪声
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.bak
+*.bak-*
+
+# 临时产物
+.tmp/
+*.log

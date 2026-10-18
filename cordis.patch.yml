@@ -1,0 +1,24 @@
+# dsh-music-on —— 插件的 cordis 装配补丁
+#
+# 安装方式（二选一，本机实测有效）：
+#   A. dsh plugin --profile web add file:J:/plugin/dsh-music-on
+#   B. 手工在 profiles/web/package.json 的 dependencies 里加
+#        "dsh-music-on": "file:J:/plugin/dsh-music-on"
+#      并把 "dsh-music-on" 追加进同文件的 dsh.profile.bundles 数组。
+#
+# 【本机踩过的坑，写在这里防止重复踩】
+#   只写本 patch、不把包名加进 dsh.profile.bundles，插件不会被挂载 ——
+#   进程里根本不会 require 这个包，日志里连一行报错都不会有。
+#   bundles 数组才是「加载哪个插件」的唯一真相，本文件只负责「加载后怎么装」。
+#
+# 关于 why：本插件两侧都要注册东西，宿主半边负责三条 /api 路由，
+# 浏览器半边负责右侧栏标签页 + 设置分区。insert 之后 cordis 会按
+# package.json 的 main 取宿主半边，按 exports["./client"] 取浏览器半边。
+# 【格式铁律】本文件顶层必须是 YAML **数组**（以 `- ` 开头），不是映射。
+# 写成 `insert:` 顶层嵌套会被宿主判定为非法 overlay：
+#   dsh: overlay ... cordis.patch.yml must be a top-level YAML array of loader patch entries
+#   dsh: profile startup denies it until you grant an exemption
+# 且这条校验失败会让**整个插件**被拒载，不是警告。
+- insert:
+    - id: dsh-music-on
+      name: dsh-music-on
