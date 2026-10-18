@@ -160,6 +160,16 @@ dsh-music-on/
 
 ---
 
+## 截图
+
+| 收起态胶囊 | 展开态卡片 |
+| --- | --- |
+| ![胶囊](docs/screenshot-capsule.png) | ![卡片](docs/screenshot-dock.png) |
+
+![音景](docs/screenshot-soundscapes.png)
+
+三张图都列在 `screenshots.json` 里（商店按它决定展示顺序）。它们由 `scripts/shoot-screenshots.py`（Playwright）从真实 GUI 拍下，所以同时是**视觉回归**：改完 CSS 重拍一遍，哪里漂了一眼就能看出来。
+
 ## 三条 HTTP 路由与平台票据通道
 
 | 路径 | 挂法 | 存在理由 |

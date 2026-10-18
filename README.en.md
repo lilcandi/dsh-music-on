@@ -30,6 +30,19 @@ dsh plugin --profile web add github:lilcandi/dsh-music-on
 
 Then reload the page (`Ctrl+F5`). The music capsule should appear in the bottom-right corner.
 
+## Screenshots
+
+| Collapsed capsule | Player card |
+| --- | --- |
+| ![Capsule](docs/screenshot-capsule.png) | ![Card](docs/screenshot-dock.png) |
+
+![Soundscapes](docs/screenshot-soundscapes.png)
+
+The same three files are declared in `screenshots.json`, which is what storefronts read
+for ordering. They are rendered from the live GUI by `scripts/shoot-screenshots.py`
+(Playwright), so they are also a visual regression check: re-running it after a CSS change
+shows immediately if something drifted.
+
 ## Requirements
 
 - DeepSeek Harness Web GUI `0.2.0-rc.1` and newer, below `0.3.0`.
