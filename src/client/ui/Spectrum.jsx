@@ -306,11 +306,16 @@ export function Spectrum(props) {
   const glow = normalizeGlow(settings && settings.spectrumGlow);
 
   // 外部播放器模式下没有 analyser：先按 engine 当前状态定初始占位，再靠事件刷新。
+  //
+  // 判据只能是 mode === 'external'，不能再叠加 spectrumAvailable。
+  // 空闲态（刚打开页面、什么都没放）engine 的 spectrumAvailable 也是 false，
+  // 此时频谱在画呼吸基线 —— 那是「有点可画」，不是「没有频谱」。
+  // 早先写成 `spectrumAvailable !== false` 就直接把「外部播放器 · 无频谱」
+  // 这枚徽标焊在了空面板的右下角。
   const initialSpectrumAvailable = (() => {
     const state = readEngineState(engine);
     if (state === null) return true;
-    if (state.mode === 'external') return false;
-    return state.spectrumAvailable !== false;
+    return state.mode !== 'external';
   })();
 
   const canvasRef = useRef(null);
@@ -763,7 +768,9 @@ export function Spectrum(props) {
         const unsubscribe = engine.onStateChange((state) => {
           const next = state && typeof state === 'object' ? state : readEngineState(engine);
           if (next !== null) {
-            externalRef.current = next.mode === 'external' || next.spectrumAvailable === false;
+            // 同上：只认 mode === 'external'。空闲态 spectrumAvailable 也是 false，
+            // 照它判会把徽标又焊回去。
+            externalRef.current = next.mode === 'external';
           }
           // 状态变化是最强的「引擎可能刚建好」信号：立刻重绑，不等 500ms 重试窗口。
           if (bindAnalyser(readAnalyser(engine))) nextProbeTs = 0;

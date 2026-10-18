@@ -8704,8 +8704,7 @@ var __dshMusicOnImpl__ = (() => {
     const initialSpectrumAvailable = (() => {
       const state = readEngineState(engine);
       if (state === null) return true;
-      if (state.mode === "external") return false;
-      return state.spectrumAvailable !== false;
+      return state.mode !== "external";
     })();
     const canvasRef = (0, import_react3.useRef)(null);
     const hostRef = (0, import_react3.useRef)(null);
@@ -9061,7 +9060,7 @@ var __dshMusicOnImpl__ = (() => {
           const unsubscribe = engine.onStateChange((state) => {
             const next = state && typeof state === "object" ? state : readEngineState(engine);
             if (next !== null) {
-              externalRef.current = next.mode === "external" || next.spectrumAvailable === false;
+              externalRef.current = next.mode === "external";
             }
             if (bindAnalyser(readAnalyser(engine))) nextProbeTs = 0;
             if (visibleRef.current) resume();
