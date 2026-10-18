@@ -47,8 +47,10 @@
     "src",
     "presets",
     "cordis.patch.yml",
+    "screenshots.json",
     "README.md",
-    "README.en.md"
+    "README.en.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node scripts/build-client.mjs",

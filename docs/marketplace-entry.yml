@@ -1,0 +1,6 @@
+url: https://github.com/lilcandi/dsh-music-on
+name: lilcandi/dsh-music-on
+category: ui
+description:
+  en: 'A music dock for the DSH web GUI. A draggable capsule in the bottom-right corner opens into a player card: queue with prev/next, draggable progress bar, volume knob (scroll or drag), three loop modes, per-track covers, and drag-and-drop local audio. Paste Bilibili, NetEase Cloud Music or QQ Music playlist and track links — NetEase and QQ audio reaches the browser as an opaque HMAC token instead of a plain URL. A spectrum canvas on the page bottom draws from a real AnalyserNode in dots, bars, line or wave form, with adjustable bar count, gain, glow, height, frame rate and placement. Ships seven bundled CC0 soundscapes (white noise, rain, cafe, late-night bar, beat, jazz, lo-fi) and a settings section with favorites and history tables.'
+  zh: 'DSH 网页端音乐台。右下角一枚可拖动的胶囊，点开是播放器卡片：播放列表与上一首/下一首、可拖动的进度条、音量旋钮（滚轮或拖动）、三种循环模式、逐曲封面、拖入本地音频即播。粘贴 B 站、网易云、QQ 音乐的歌曲与歌单链接即可解析；网易云与 QQ 的音频由宿主签发不透明 HMAC 票据再交给浏览器，而不是明文直链。页面底部一条频谱画布，数据来自真实 AnalyserNode，支持圆点/柱状/折线/波形四种画法，柱数、灵敏度、光晕、高度、帧率与位置均可调。内置七条 CC0 白噪音、雨声、咖啡馆、深夜酒吧、鼓点、爵士与 Lo-Fi 音景，设置分区另有收藏与历史两张表。'
