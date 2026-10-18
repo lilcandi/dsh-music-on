@@ -17,7 +17,7 @@
  * 频谱两种形态：`bar` 贴在屏幕底边通栏（用户要的「页面底部有频谱动画」），
  * `panel` 嵌在卡片里。两者同一份 AnalyserNode 数据，不额外开上下文。
  */
-import { PLUGIN_ID } from '../../shared.js';
+import { PLUGIN_ID, PRESETS_PATH } from '../../shared.js';
 import { intakeLinks, resolvePlatform, summarizeReport, hasDegradedItem } from '../linkintake.js';
 import { entryFrom, isFavorite, subscribeLibrary, toggleFavorite } from '../library.js';
 
@@ -353,6 +353,17 @@ export function createShellDock(props) {
     const [busy, setBusy] = useState(false);
     const [note, setNote] = useState(null); // { tone: 'ok'|'bad', text }
     const [dragging, setDragging] = useState(false);
+    /**
+     * 预置音景（白噪音 / 雨声 / 咖啡馆 / 鼓点 / 爵士 / Lo-Fi）。
+     *
+     * 为什么这里自己拉清单，而不是复用 `presets-boot.js` 的 createPresets 控制器：
+     * 那个控制器走 IndexedDB 缓存、sha256 校验和它自己的引擎实例，服务于面板形态的
+     * 完整音景库；而右下角这张卡片只需要「点一下就往队列里塞一条自带 WAV」。
+     * 两条路都接进同一个 controller 会出现两套引擎实例抢 AudioContext。
+     * 清单本身是同一份静态资源，没有第二份真相。
+     */
+    const [soundscapes, setSoundscapes] = useState(() => []);
+    const [soundscapeOpen, setSoundscapeOpen] = useState(false);
     /**
      * 当前曲目是否已收藏。
      *
@@ -887,6 +898,72 @@ export function createShellDock(props) {
     const flash = useCallback((text) => {
       flashRef.current({ tone: 'ok', text });
     }, []);
+
+    /**
+     * 拉一次预置音景清单。
+
+     * 只取 `source === 'embedded' && status === 'ready'` 的条目：那七条是插件自带的
+     * 合成 WAV，同源、可循环、能进 AudioContext 拿到真频谱。B 站 embed 与外部平台
+     * 跳转类条目在卡片里没有意义（前者进不了音频图，后者只是开新页），不列出来。
+     *
+     * 失败不抛：音景是附加能力，清单 404 不该让整个音乐库白屏。
+     */
+    useEffect(() => {
+      const controller = typeof AbortController === 'function' ? new AbortController() : null;
+      const run = async () => {
+        if (typeof fetch !== 'function') return;
+        try {
+          const response = await fetch(`${PRESETS_PATH}/manifest.json`, {
+            credentials: 'same-origin',
+            signal: controller ? controller.signal : undefined,
+          });
+          if (!response.ok) return;
+          const body = await response.json();
+          const items = Array.isArray(body && body.items) ? body.items : [];
+          setSoundscapes(items.filter((item) => (
+            item
+            && item.source === 'embedded'
+            && item.status === 'ready'
+            && typeof item.file === 'string'
+            && item.file !== ''
+          )));
+        } catch (_error) {
+          /* 拿不到清单就只是没有音景入口，不影响播放器本体 */
+        }
+      };
+      void run();
+      return () => {
+        if (controller) controller.abort();
+      };
+    }, []);
+
+    /**
+     * 点一条音景 → 入队并开播。
+     *
+     * `playFirst` 只在队列为空时由引擎自己判定（engine.add 里 `current === null`），
+     * 所以这里恒传 true 不会打断正在播的东西。
+     *
+     * loopStart / loopEnd 必须一起带：七条 WAV 都是 5.6 秒的无缝循环切片，
+     * 少了循环点就变成每 5.6 秒停一次再切下一首。
+     */
+    const playSoundscape = guard(async (item) => {
+      if (!engine || !item) return;
+      const position = await engine.addManifest([{
+        id: item.id,
+        name: item.name,
+        url: `${PRESETS_PATH}/${item.file}`,
+        duration: item.duration,
+        loopStart: item.loopStart,
+        loopEnd: item.loopEnd,
+      }], { playFirst: true });
+      if (position >= 0) {
+        // 音景天生要循环，切到单曲循环而不是跟随用户的全局循环设置 ——
+        // 否则默认的「列表循环」会在这一条播完后跳到下一条音景，用户点的是雨声，
+        // 听到的却是鼓点，那是最容易被当成 bug 的行为。
+        engine.setLoopMode('one');
+        flash(t('dock.soundscapeOn', '音景已开始循环播放'));
+      }
+    });
 
     const togglePlay = guard(async () => {
       if (!engine) return;
@@ -1850,6 +1927,37 @@ export function createShellDock(props) {
         disabled: busy,
         onClick: () => { void runSelfCheck(); },
       }, t('dock.selfCheck', '自检'))),
+
+      // 音景一排：七条自带 WAV 的快捷入口。
+      //
+      // 缺了它，卡片能做的只有「拖文件 / 粘链接」，而插件包里明明躺着七条合成音景
+      // —— 那是最容易被当成功能没做完的地方。这里默认收起成一枚按钮，
+      // 展开才铺开七个 chip，避免把卡片撑得比播放列表还长。
+      soundscapes.length > 0
+        ? h('div', { className: 'dmo-soundscapes' },
+          h('button', {
+            type: 'button',
+            className: `dmo-soundscapes-head${soundscapeOpen ? ' is-open' : ''}`,
+            title: t('dock.soundscapeHint', '自带七条可无缝循环的合成音景'),
+            'aria-expanded': soundscapeOpen,
+            onClick: () => setSoundscapeOpen((prev) => !prev),
+          },
+          h('span', { className: 'dmo-soundscapes-caret' }, soundscapeOpen ? '▾' : '▸'),
+          h('span', { className: 'dmo-soundscapes-title' }, t('dock.soundscapes', '音景')),
+          h('span', { className: 'dmo-soundscapes-count' }, `${soundscapes.length}`)),
+          soundscapeOpen
+            ? h('div', { className: 'dmo-soundscapes-body' },
+              soundscapes.map((item) => h('button', {
+                key: item.id,
+                type: 'button',
+                className: 'dmo-chip',
+                'data-preset-id': item.id,
+                title: item.nameEn ? `${item.name} · ${item.nameEn}` : item.name,
+                disabled: busy,
+                onClick: () => { void playSoundscape(item); },
+              }, item.name || item.id)))
+            : null)
+        : null,
 
       // 播放列表
       //

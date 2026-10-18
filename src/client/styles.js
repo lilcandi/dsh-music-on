@@ -1333,6 +1333,57 @@ export const CSS_TEXT = `
   background: rgba(77, 107, 254, 0.12);
 }
 
+/* ---------- 音景一排（卡片内的七条自带音景） ---------- */
+.dmo-soundscapes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dmo-soundscapes-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dmo-fg-dim);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.dmo-soundscapes-head:hover {
+  color: var(--dmo-brand-deep, #2f4bd8);
+}
+
+.dmo-soundscapes-caret {
+  width: 9px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.dmo-soundscapes-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dmo-soundscapes-count {
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--dmo-hover);
+  color: var(--dmo-brand, #4d6bfe);
+  font-size: 10px;
+  text-align: center;
+}
+
+.dmo-soundscapes-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
 /* ---------- 链接输入 ---------- */
 .dmo-link {
   display: flex;

@@ -59,6 +59,43 @@ test('外部播放器必须有属于本插件的关闭出口', () => {
     '渲染条件必须带上 !embedDismissed');
 });
 
+/**
+ * 音景入口。
+ *
+ * 存在理由（真实事故）：插件包里躺着七条 CC0 WAV，README 和商店描述都写着
+ * 「内置七条音景」，但右下角卡片里**一个播它们的按钮都没有** —— 只有右侧栏标签页
+ * 那个 PlayerPanel 挂了 PresetsSection。用户装完照着描述找，找不到，等于功能缺失，
+ * 而所有自检都是绿的（文件确实在包里）。所以这条断言盯两件事：
+ * 卡片里真的渲染出入口，且点下去走的是自带 WAV 而不是去调平台解析。
+ */
+test('卡片里必须有音景入口，且点下去播的是自带 WAV', () => {
+  const source = fs.readFileSync(SRC, 'utf8');
+
+  assert.ok(source.includes("className: 'dmo-soundscapes'"), '卡片里必须有音景区块');
+  assert.ok(source.includes("'data-preset-id': item.id"), '每条音景要能按 id 定位（测试与调试都靠它）');
+  assert.ok(source.includes('playSoundscape'), '必须有音景入队处理函数');
+
+  // 清单必须从宿主静态路由拉，且只取 embedded + ready。
+  // 少了这个过滤，B 站 embed 与外部跳转条目也会冒出来 —— 前者进不了音频图（没有频谱），
+  // 后者点了只是开新页，都和「点一条就出声」的预期相悖。
+  assert.ok(source.includes("`${PRESETS_PATH}/manifest.json`"), '清单必须走 PRESETS_PATH');
+  assert.ok(/source === 'embedded'/.test(source), '音景只取 embedded 条目');
+  assert.ok(/status === 'ready'/.test(source), '音景只取 ready 条目');
+
+  // 播放链路必须是 addManifest（自带 WAV 直链），不能是 addUrl(平台页面)。
+  assert.ok(/engine\.addManifest\(\[\{/.test(source), '音景必须走 engine.addManifest');
+  assert.ok(/loopEnd: item\.loopEnd/.test(source), '必须带上循环点，否则每 5.6 秒断一次');
+  // 音景天生要循环：切到单曲循环，避免默认「列表循环」播完这条跳到下一条音景。
+  assert.ok(/setLoopMode\('one'\)/.test(source), '点音景后必须切到单曲循环');
+});
+
+test('音景区块的类名必须有对应 CSS', () => {
+  const styles = fs.readFileSync(path.join(ROOT, 'src/client/styles.js'), 'utf8');
+  for (const cls of ['dmo-soundscapes', 'dmo-soundscapes-head', 'dmo-soundscapes-body', 'dmo-soundscapes-count']) {
+    assert.ok(styles.includes(`.${cls}`), `styles.js 缺少 .${cls} —— 结构有了但没样式，会渲染成裸文字`);
+  }
+});
+
 test('ShellDock.js 里没有 useCallback 依赖的前向引用', () => {
   const lines = fs.readFileSync(SRC, 'utf8').split('\n');
   const declLine = new Map();

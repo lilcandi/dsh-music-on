@@ -124,6 +124,9 @@ var __dshMusicOnImpl__ = (() => {
       "dock.show": "显示音乐库",
       "dock.linkPlaceholder": "粘贴 B站 / 网易云 / QQ音乐 链接或歌单",
       "dock.queued": "已加入队列，按播放键开始",
+      "dock.soundscapes": "音景",
+      "dock.soundscapeHint": "自带七条可无缝循环的合成音景，点一条即开播",
+      "dock.soundscapeOn": "音景已开始循环播放",
       "dock.queueEmpty": "拖入音频，或粘贴链接，或从预置里挑一首",
       "dock.cleared": "播放列表已清空",
       "dock.queueRestored": "已恢复上次的播放列表",
@@ -209,6 +212,9 @@ var __dshMusicOnImpl__ = (() => {
       "dock.show": "Show music library",
       "dock.linkPlaceholder": "Paste a Bilibili / NetEase / QQ Music link or playlist",
       "dock.queued": "Queued — press play to start",
+      "dock.soundscapes": "Soundscapes",
+      "dock.soundscapeHint": "Seven bundled seamless loops — click one to start",
+      "dock.soundscapeOn": "Soundscape looping",
       "dock.queueEmpty": "Drop audio, paste a link, or pick a preset",
       "dock.cleared": "Playlist cleared",
       "dock.queueRestored": "Playlist restored from last time",
@@ -1577,6 +1583,57 @@ var __dshMusicOnImpl__ = (() => {
   color: var(--dmo-brand-deep, #2f4bd8);
   border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
   background: rgba(77, 107, 254, 0.12);
+}
+
+/* ---------- 音景一排（卡片内的七条自带音景） ---------- */
+.dmo-soundscapes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dmo-soundscapes-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dmo-fg-dim);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.dmo-soundscapes-head:hover {
+  color: var(--dmo-brand-deep, #2f4bd8);
+}
+
+.dmo-soundscapes-caret {
+  width: 9px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.dmo-soundscapes-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dmo-soundscapes-count {
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--dmo-hover);
+  color: var(--dmo-brand, #4d6bfe);
+  font-size: 10px;
+  text-align: center;
+}
+
+.dmo-soundscapes-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 /* ---------- 链接输入 ---------- */
@@ -6460,6 +6517,8 @@ var __dshMusicOnImpl__ = (() => {
       const [busy, setBusy] = useState5(false);
       const [note, setNote] = useState5(null);
       const [dragging, setDragging] = useState5(false);
+      const [soundscapes, setSoundscapes] = useState5(() => []);
+      const [soundscapeOpen, setSoundscapeOpen] = useState5(false);
       const [favOn, setFavOn] = useState5(() => {
         const url = currentPageUrl(engine);
         return url === "" ? false : isFavorite(url);
@@ -6751,6 +6810,42 @@ var __dshMusicOnImpl__ = (() => {
       const flash = useCallback4((text) => {
         flashRef.current({ tone: "ok", text });
       }, []);
+      useEffect6(() => {
+        const controller = typeof AbortController === "function" ? new AbortController() : null;
+        const run = async () => {
+          if (typeof fetch !== "function") return;
+          try {
+            const response = await fetch(`${PRESETS_PATH}/manifest.json`, {
+              credentials: "same-origin",
+              signal: controller ? controller.signal : void 0
+            });
+            if (!response.ok) return;
+            const body = await response.json();
+            const items = Array.isArray(body && body.items) ? body.items : [];
+            setSoundscapes(items.filter((item) => item && item.source === "embedded" && item.status === "ready" && typeof item.file === "string" && item.file !== ""));
+          } catch (_error) {
+          }
+        };
+        void run();
+        return () => {
+          if (controller) controller.abort();
+        };
+      }, []);
+      const playSoundscape = guard(async (item) => {
+        if (!engine || !item) return;
+        const position2 = await engine.addManifest([{
+          id: item.id,
+          name: item.name,
+          url: `${PRESETS_PATH}/${item.file}`,
+          duration: item.duration,
+          loopStart: item.loopStart,
+          loopEnd: item.loopEnd
+        }], { playFirst: true });
+        if (position2 >= 0) {
+          engine.setLoopMode("one");
+          flash(t("dock.soundscapeOn", "音景已开始循环播放"));
+        }
+      });
       const togglePlay = guard(async () => {
         if (!engine) return;
         await engine.toggle();
@@ -7552,6 +7647,43 @@ var __dshMusicOnImpl__ = (() => {
               }
             }, t("dock.selfCheck", "自检"))
           ),
+          // 音景一排：七条自带 WAV 的快捷入口。
+          //
+          // 缺了它，卡片能做的只有「拖文件 / 粘链接」，而插件包里明明躺着七条合成音景
+          // —— 那是最容易被当成功能没做完的地方。这里默认收起成一枚按钮，
+          // 展开才铺开七个 chip，避免把卡片撑得比播放列表还长。
+          soundscapes.length > 0 ? h6(
+            "div",
+            { className: "dmo-soundscapes" },
+            h6(
+              "button",
+              {
+                type: "button",
+                className: `dmo-soundscapes-head${soundscapeOpen ? " is-open" : ""}`,
+                title: t("dock.soundscapeHint", "自带七条可无缝循环的合成音景"),
+                "aria-expanded": soundscapeOpen,
+                onClick: () => setSoundscapeOpen((prev) => !prev)
+              },
+              h6("span", { className: "dmo-soundscapes-caret" }, soundscapeOpen ? "▾" : "▸"),
+              h6("span", { className: "dmo-soundscapes-title" }, t("dock.soundscapes", "音景")),
+              h6("span", { className: "dmo-soundscapes-count" }, `${soundscapes.length}`)
+            ),
+            soundscapeOpen ? h6(
+              "div",
+              { className: "dmo-soundscapes-body" },
+              soundscapes.map((item) => h6("button", {
+                key: item.id,
+                type: "button",
+                className: "dmo-chip",
+                "data-preset-id": item.id,
+                title: item.nameEn ? `${item.name} · ${item.nameEn}` : item.name,
+                disabled: busy,
+                onClick: () => {
+                  void playSoundscape(item);
+                }
+              }, item.name || item.id))
+            ) : null
+          ) : null,
           // 播放列表
           //
           // 这不是「队列的另一份 UI」，而是唯一让用户看见「先放什么、后放什么」的地方。

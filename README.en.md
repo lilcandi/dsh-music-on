@@ -16,6 +16,7 @@ and playable immediately.
 - **Playback** — queue, previous / next, draggable progress bar, volume knob (hover and scroll the wheel), three loop modes, cross-fade on pause.
 - **Drop in local audio** — drop a file onto the card and it queues and plays. mp3 / wav / ogg / m4a / flac / aac / opus / webm.
 - **Paste links** — Bilibili videos, NetEase Cloud Music playlists and tracks, QQ Music playlists and tracks, direct audio URLs. Several at once, even mixed.
+- **Bundled soundscapes** — a "soundscapes" row in the card opens seven shipped WAV chips (white noise / rain / cafe / beat loop / jazz piano / lo-fi / late-night bar); one click loops it seamlessly with no external request.
 - **Spectrum** — dots / bars / line / wave, with adjustable bar count, gain, glow, height, frame rate, and either a full-width strip along the bottom or embedded in the card.
 - **Covers** — bundled tracks use bundled art, platform tracks use the track's own album cover, Bilibili tracks use the video cover.
 - **Settings page** — `Settings → Music`, in five groups: interface / playback / spectrum / network & cache / favorites & history.
