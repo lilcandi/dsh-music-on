@@ -33,10 +33,11 @@ export function Settings(props) {
   // 免得它在 effect 阶段才拿到 undefined。前两个参数保持原签名不变。
   const fallbackSettings = useSettings({ useState, useEffect }, fallbackStore);
   const current = settings || fallbackSettings;
+  /** 主题名跟着设置走，只作为 data 属性交给 CSS 选令牌。 */
+  const theme = current.theme || 'whale';
 
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
-  const [cacheInfo, setCacheInfo] = useState(null);
 
   useEffect(() => {
     if (!status) return undefined;
@@ -58,72 +59,6 @@ export function Settings(props) {
     }
     fallbackStore.patch(key, value);
     setStatus('已保存到本机');
-  }
-
-  function measureCache() {
-    setBusy(true);
-    const finish = (mb) => {
-      setCacheInfo({ mb });
-      setBusy(false);
-    };
-    try {
-      if (
-        typeof navigator !== 'undefined' &&
-        navigator.storage &&
-        typeof navigator.storage.estimate === 'function'
-      ) {
-        navigator.storage.estimate().then(
-          (estimate) => {
-            const bytes = estimate && typeof estimate.usage === 'number' ? estimate.usage : 0;
-            finish(Math.round((bytes / (1024 * 1024)) * 10) / 10);
-          },
-          () => finish(null),
-        );
-        return;
-      }
-      finish(null);
-    } catch (_error) {
-      finish(null);
-    }
-  }
-
-  function clearCache() {
-    setBusy(true);
-    let keys = [];
-    try {
-      if (typeof caches !== 'undefined' && typeof caches.keys === 'function') {
-        // caches.keys() 是 Promise；这里用 then 链，函数本身不声明 async 也能闭环。
-        caches
-          .keys()
-          .then((list) => {
-            keys = Array.isArray(list) ? list : [];
-            return Promise.all(
-              keys.map((key) =>
-                Promise.resolve()
-                  .then(() => caches.delete(key))
-                  .catch(() => false),
-              ),
-            );
-          })
-          .then((results) => {
-            const cleared = results.filter(Boolean).length;
-            setStatus(cleared > 0 ? `已清空 ${cleared} 个缓存桶` : '缓存已是最新状态');
-          })
-          .catch(() => {
-            setStatus('清空缓存失败，详见控制台');
-          })
-          .then(() => {
-            setBusy(false);
-            setCacheInfo(null);
-          });
-        return;
-      }
-      setStatus('当前环境无缓存可清');
-    } catch (_error) {
-      setStatus('清空缓存失败，详见控制台');
-    }
-    setBusy(false);
-    setCacheInfo(null);
   }
 
   function resetAll() {
@@ -218,10 +153,10 @@ export function Settings(props) {
   // 漏掉或写错的项会被下面的 ungrouped 兜底捕获（漏项在设置页就是「看不见的死设置」）。
   const GROUPS = [
     { id: 'layout', title: '界面', keys: ['startCollapsed', 'dockSize', 'showTitles'] },
+    { id: 'theme', title: '外观主题', keys: ['theme'] },
     { id: 'playback', title: '播放', keys: ['volume', 'loopMode', 'allowAutoplay', 'autoplayTarget', 'crossfadeSec', 'fadeOnPause', 'rememberQueue'] },
     { id: 'intake', title: '链接与歌单', keys: ['platformTrackLimit'] },
-    { id: 'spectrum', title: '频谱', keys: ['spectrumStyle', 'spectrumPlacement', 'spectrumBars', 'spectrumGain', 'spectrumGlow', 'spectrumHeight', 'spectrumFps'] },
-    { id: 'network', title: '网络与缓存', keys: ['proxyEnabled', 'cacheLimitMB'] },
+    { id: 'spectrum', title: '频谱', keys: ['spectrumStyle', 'spectrumPlacement', 'spectrumSpan', 'spectrumBars', 'spectrumGain', 'spectrumGlow', 'spectrumHeight', 'spectrumFps', 'spectrumDepth'] },
   ];
   const groupedKeys = new Set(GROUPS.reduce((all, group) => all.concat(group.keys), []));
   // 将来往 schema 加项却忘了放进分组时，自动兜底到「其他」，绝不静默消失。
@@ -247,40 +182,27 @@ export function Settings(props) {
   const actions = [
     h(
       'button',
-      { key: 'measure', type: 'button', className: 'dmo-btn', onClick: measureCache, disabled: busy },
-      '查看缓存占用',
-    ),
-    h(
-      'button',
-      { key: 'clear', type: 'button', className: 'dmo-btn', onClick: clearCache, disabled: busy },
-      '清空缓存',
-    ),
-    h(
-      'button',
       { key: 'reset', type: 'button', className: 'dmo-btn', onClick: resetAll, disabled: busy },
       '恢复默认值',
     ),
   ];
-  if (cacheInfo) {
-    actions.push(
-      h(
-        'span',
-        { key: 'cacheinfo', className: 'dmo-settings-meta' },
-        cacheInfo.mb === null ? '缓存占用不可读' : `当前占用 ${cacheInfo.mb} MB`,
-      ),
-    );
-  }
   if (status) {
     actions.push(h('span', { key: 'status', className: 'dmo-settings-status' }, status));
   }
 
   return h(
     'div',
-    { className: 'dmo-settings', 'data-plugin': 'dsh-music-on' },
+    {
+      className: 'dmo-settings',
+      'data-plugin': 'dsh-music-on',
+      // 主题令牌作用域：设置分区不在 .dmo-dock-stack 里，必须自己挂一份，
+      // 否则用户切了主题、卡片变了色，设置页还是旧的蓝白。
+      'data-dmo-theme': theme,
+    },
     h(
       'div',
       { className: 'dmo-settings-head' },
-      h('div', { className: 'dmo-settings-title' }, '音景播放器'),
+      h('div', { className: 'dmo-settings-title' }, '音乐播放器'),
       h(
         'div',
         { className: 'dmo-settings-sub' },
@@ -291,7 +213,7 @@ export function Settings(props) {
     ),
     h('div', { className: 'dmo-settings-body' }, groups),
     // 收藏与历史放在设置项之后、操作按钮之前：它们是「我攒下来的链接」，
-    // 与上面那 19 项「播放器怎么表现」是两类东西，不该混进同一张表里。
+    // 与上面那些「播放器怎么表现」是两类东西，不该混进同一张表里。
     h(LibrarySection, { key: 'library', engine, t }),
     h('div', { className: 'dmo-settings-actions' }, actions),
   );

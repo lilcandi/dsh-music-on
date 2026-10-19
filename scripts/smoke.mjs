@@ -158,30 +158,17 @@ const { createEngine } = await import('../src/client/engine.js');
   else bad('bilibili load', String(loaded.src));
 }
 
-// 3. presets.play() 三 mode 分流
+// 3. 循环点：loopStart=0 必须被保住（不能被归一成 null）
 {
-  const a = sources.resolvePresetRoute({ mode: 'audio', spectrum: true, url: 'presets/rain.wav' });
-  const f = sources.resolvePresetRoute({ mode: 'iframe', spectrum: false, embedUrl: 'https://player.bilibili.com/x' });
-  const e = sources.resolvePresetRoute({ mode: 'external' });
-  if (a.route === 'audio' && a.spectrum === true) ok('preset mode audio -> audio 路由 + 频谱');
-  else bad('preset audio', JSON.stringify(a));
-  if (f.route === 'iframe' && f.spectrum === false) ok('preset mode iframe -> iframe 路由');
-  else bad('preset iframe', JSON.stringify(f));
-  if (e.route === 'external') ok('preset mode external -> 不入队');
-  else bad('preset external', JSON.stringify(e));
-}
-
-// 4. 循环点：loopStart=0 必须被保住（不能被归一成 null）
-{
-  const track = sources.createPresetTrack({ id: 'rain', name: '雨声', file: 'rain.wav', duration: 5.6, loopStart: 0, loopEnd: 5.6, mode: 'audio' });
+  const track = sources.createUrlTrack({ url: 'https://example.invalid/a.wav', title: '雨声', loopStart: 0, loopEnd: 5.6 });
   if (track.loopStart === 0 && track.loopEnd === 5.6) ok('loopStart=0 保住');
   else bad('loopStart=0', `start=${track.loopStart} end=${track.loopEnd}`);
-  const mid = sources.createPresetTrack({ id: 'm', name: '中段', file: 'm.wav', loopStart: 1.2, loopEnd: 4.4 });
+  const mid = sources.createUrlTrack({ url: 'https://example.invalid/b.wav', title: '中段', loopStart: 1.2, loopEnd: 4.4 });
   if (mid.loopStart === 1.2 && mid.loopEnd === 4.4) ok('mid 循环段保住');
   else bad('mid loop', `start=${mid.loopStart} end=${mid.loopEnd}`);
 }
 
-// 5. 引擎：外部模式让 spectrumAvailable=false、getAnalyser()=null、duration=null
+// 4. 引擎：外部模式让 spectrumAvailable=false、getAnalyser()=null、duration=null
 {
   const engine = createEngine();
   await engine.add([sources.createEmbedTrack({ url: 'https://www.bilibili.com/video/BV1Lyw7zPEeo' })], { playFirst: true });
@@ -195,7 +182,7 @@ const { createEngine } = await import('../src/client/engine.js');
   await engine.dispose();
 }
 
-// 6. 降级链：只降一次，降完 mode=external、频谱关、analyser 为 null
+// 5. 降级链：只降一次，降完 mode=external、频谱关、analyser 为 null
 {
   const engine = createEngine();
   const bili = sources.createBilibiliTrack({ bvid: 'BV1Lyw7zPEeo', cid: '36737517327', title: 'Jazz' });
@@ -215,7 +202,7 @@ const { createEngine } = await import('../src/client/engine.js');
   await engine.dispose();
 }
 
-// 7. dispose：关闭 context、revoke 所有 objectURL
+// 6. dispose：关闭 context、revoke 所有 objectURL
 {
   const engine = createEngine();
   // File 是只读属性集合，这里用带 name/type/size 的普通对象顶替：

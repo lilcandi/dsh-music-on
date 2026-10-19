@@ -1,32 +1,27 @@
 /**
  * dsh-music-on 宿主半边入口。
  *
- * 这里只做三件事，全部围绕「浏览器拿不到的能力」：
+ * 这里只做两件事，全部围绕「浏览器拿不到的能力」：
  *   1) 平台链接解析路由（/api/dsh-music-on/resolve）—— 受同源策略限制，
  *      浏览器直连 bilibili / 网易云 / QQ 音乐 必然被拦，必须宿主代取。
  *   2) 音频流转发路由（/api/dsh-music-on/stream）—— 让外部音频能进
- *      AudioContext，从而拿到频谱数据。
- *   3) 预置音景静态资源路由（/api/dsh-music-on/presets）—— 把包内
- *      presets/*.wav 与 manifest.json 按白名单暴露给页面。
+ *      AudioContext，从而拿到频谱数据；平台直链还靠它验签不透明票据。
  *
- * 【两条不同挂法的区别，别混用】
- *   1、2 走 `ctx.connection.fetch.register`：它们返回 `Response`，且天然继承
- *   `/api` 前缀的 owner 校验（`dsh-client-connection/lib/index.js:1044-1058`
- *   整体挂载 `/api`，`:822-836` 强制 `peer.principal.kind === 'owner'`）。
- *   3 走 `ctx.webServer.register({ kind: 'prefix', … })`：它需要自己写
- *   `ServerResponse`，因为要支持 `Range`（WAV 由 `<audio>` 拉取，
- *   Chrome 会先发 `Range: bytes=0-` 试探）。webserver 的契约原话是
- *   "Route handlers retain direct response ownership"，正好对应。
- *   这条 prefix 落在 `/api/dsh-music-on/` 之下，所以同样在 owner 校验之后。
+ * 【挂法：两条都走 `ctx.connection.fetch.register`】
+ *   它们返回 `Response`，且天然继承 `/api` 前缀的 owner 校验
+ *   （`dsh-client-connection/lib/index.js:1044-1058` 整体挂载 `/api`，
+ *   `:822-836` 强制 `peer.principal.kind === 'owner'`）。
+ *   原先第三条「预置音景静态资源」走 `ctx.webServer.register({ kind: 'prefix' })`
+ *   以便自己写 `ServerResponse` 支持 `Range`；音景功能已按用户要求整体移除，
+ *   这条 prefix 与 `webServer` 依赖同时退场。
  */
-import { PLUGIN_ID, PRESETS_PATH, RESOLVE_PATH, STREAM_PATH } from './shared.js';
+import { PLUGIN_ID, RESOLVE_PATH, STREAM_PATH } from './shared.js';
 import { createMediaTokenStore } from './host/mediatoken.js';
 import { registerResolveRoute } from './host/resolve.js';
 import { registerStreamRoute } from './host/stream.js';
-import { registerPresetsRoute } from './host/presets-static.js';
 
-/** 宿主侧依赖：connection 供前两条路由，webServer 供静态资源路由。 */
-export const inject = ['connection', 'webServer'];
+/** 宿主侧依赖：两条路由都只需要 connection。 */
+export const inject = ['connection'];
 
 /** 插件名，与 package.json 的 name 一致。 */
 export const name = PLUGIN_ID;
@@ -73,22 +68,12 @@ export function apply(ctx) {
       'dsh-music-on: stream route',
     );
   });
-
-  // webServer 单独 inject：它与 connection 是两条独立的服务依赖，
-  // 合成一条会让静态路由在本可用的前提下因 connection 未就绪而挂不上。
-  ctx.inject(['webServer'], (inner) => {
-    inner.effect(
-      () => registerPresetsRoute(inner),
-      'dsh-music-on: presets route',
-    );
-  });
 }
 
 /** 供测试与后续扩展引用，避免路径字面量在多处漂移。 */
 export const routes = Object.freeze({
   resolve: RESOLVE_PATH,
   stream: STREAM_PATH,
-  presets: PRESETS_PATH,
 });
 
 export const __test = { routes };

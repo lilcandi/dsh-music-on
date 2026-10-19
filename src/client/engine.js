@@ -24,12 +24,9 @@ import {
   describeTrack,
   createUrlTrack,
   createEmbedTrack,
-  createPresetTrack,
   createBilibiliTrack,
   createPlatformTrack,
   tracksFromFiles,
-  tracksFromManifest,
-  resolvePresetRoute,
   toEmbedUrl,
 } from './sources.js';
 
@@ -281,8 +278,8 @@ function createEngine() {
       currentTime = 0;
       status = 'ended';
       publishState('ended');
-      // 带精确循环点的音景：loopMode=one 才回卷。用户显式选了「播完停止」就尊重他，
-      // 否则一个 5.6s 的音景在 mode=off 下会自己转圈，怎么点都停不下来。
+      // 带精确循环点的曲目：loopMode=one 才回卷。用户显式选了「播完停止」就尊重他，
+      // 否则一个只有几秒的循环素材在 mode=off 下会自己转圈，怎么点都停不下来。
       if (hasLoopPoint() && loopMode === 'one') {
         restartLoopPoint();
         return;
@@ -321,7 +318,7 @@ function createEngine() {
 
   let lastTimeEmit = 0;
 
-  /* ---------------- 精确循环点（预置音景） ---------------- */
+  /* ---------------- 精确循环点 ---------------- */
 
   /**
    * 当前轨是否带可用的循环点。
@@ -353,7 +350,7 @@ function createEngine() {
   /**
    * timeupdate 级的循环点守卫。
    * 三件事：
-   *   1. 还没到 loopStart 就先跳进去（音景要求从循环段开始听，不是从头听）。
+   *   1. 还没到 loopStart 就先跳进去（有时要从循环段开始听，不是从头听）。
    *   2. 越过 loopEnd 立刻回卷到 loopStart。
    *   3. 允许误差 0.15s：timeupdate 是 4~66Hz 触发的，卡太死会在边界上抖。
    */
@@ -488,7 +485,7 @@ function createEngine() {
     duration = track && track.duration !== null ? track.duration : null;
     if (audio !== null && typeof src === 'string' && src !== '') {
       audio.src = src;
-      // loopStart 从 0 起、loopEnd 恰好是文件时长的那种音景，用原生 loop 最稳；
+      // loopStart 从 0 起、loopEnd 恰好是文件时长的那种循环音频，用原生 loop 最稳；
       // 其余交给 timeupdate 守卫（enforceLoopPoint）。
       audio.loop = typeof track.loopStart !== 'number' || track.loopStart === 0 ? hasLoopPoint() : false;
       audio.load();
@@ -805,12 +802,6 @@ function createEngine() {
     return add([track], options);
   }
 
-  /** 从预置清单批量入队。 */
-  function addManifest(items, options) {
-    const tracks = tracksFromManifest(items, options);
-    return add(tracks, options);
-  }
-
   /**
    * 加入一条 B 站音源（双轨：流代理主路 + iframe 兜底）。
    * 需要 cid 才能走流代理；只有 bvid 时就只能落到 iframe。
@@ -841,65 +832,6 @@ function createEngine() {
   function addPlatform(spec, options) {
     const track = createPlatformTrack(spec || {});
     return add([track], options);
-  }
-
-  /**
-   * 按 presets.play() 的结果入队。三条分支（audio / iframe / external）在这里收口，
-   * UI 不需要知道 presets 的返回形状。
-   *
-   * external 分支不入队 —— 它只是「跳转」，队列里躺一条永远不会播的条目是噪音。
-   * 调用方拿到 null 后自己去 openExternal。
-   *
-   * @param {object} played presets.play() 的返回值
-   * @param {object} item 清单条目（提供标题 / loop 点等元数据）
-   * @param {{ baseUrl?: string }} [options]
-   * @returns {Promise<{ position: number|null, route: string, reason: string|null }>}
-   */
-  async function addPresetPlay(played, item, options) {
-    const resolved = resolvePresetRoute(played);
-    const meta = item || {};
-    if (resolved.route === 'external') {
-      return { position: null, route: 'external', reason: resolved.reason };
-    }
-    if (resolved.route === 'iframe') {
-      const url = typeof meta.embedUrl === 'string' ? meta.embedUrl : '';
-      const track = createEmbedTrack({
-        url,
-        title: meta.name,
-        artist: '预置音景',
-        id: typeof meta.id === 'string' ? `preset:${meta.id}:embed` : undefined,
-      });
-      track.loopStart = null;
-      track.loopEnd = null;
-      const position = await add([track], options);
-      return { position, route: 'iframe', reason: resolved.reason };
-    }
-    // audio 分支：B 站的走双轨，其余走清单条目。
-    if (typeof played.bvid === 'string' && played.bvid !== '') {
-      const track = createBilibiliTrack({
-        bvid: played.bvid,
-        cid: played.cid,
-        page: meta.page,
-        title: meta.name,
-        artist: '预置音景',
-        duration: meta.duration,
-        embedUrl: meta.embedUrl,
-      });
-      track.loopStart = typeof played.loopStart === 'number' ? played.loopStart : track.loopStart;
-      track.loopEnd = typeof played.loopEnd === 'number' ? played.loopEnd : track.loopEnd;
-      const position = await add([track], options);
-      return { position, route: 'audio', reason: resolved.reason };
-    }
-    const track = createPresetTrack(
-      {
-        ...meta,
-        url: typeof played.url === 'string' ? played.url : meta.url,
-        file: typeof played.file === 'string' ? played.file : meta.file,
-      },
-      options,
-    );
-    const position = await add([track], options);
-    return { position, route: 'audio', reason: resolved.reason };
   }
 
   /**
@@ -1289,8 +1221,6 @@ function createEngine() {
     addEmbed,
     addBilibili,
     addPlatform,
-    addPresetPlay,
-    addManifest,
     remove,
     clear,
     loadAt,

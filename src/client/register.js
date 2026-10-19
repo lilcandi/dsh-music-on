@@ -30,7 +30,6 @@ import { DICTS } from './locale.js';
 import { ensureStyle, removeStyle } from './styles.js';
 import { createSettingsStore } from './settings.js';
 import { getEngine } from './engine.js';
-import { disposePresets, ensurePresets, getPresetsSync } from './presets-boot.js';
 import { createShellDock } from './ui/ShellDock.js';
 import { safeTranslate, interpolate } from './i18n.js';
 import PlayerPanel from './ui/PlayerPanel.jsx';
@@ -151,24 +150,11 @@ function MusicSeat(props) {
   const { store, engine, t } = props || {};
   const settings = useSettingsSnapshot(store);
 
-  // 预置控制器异步建（拉清单 + 探 IndexedDB）。首帧给同步快照，建好后补。
-  const [presets, setPresets] = useStateSafe(() => getPresetsSync());
-  useEffectSafe(() => {
-    if (presets !== null) return undefined;
-    let alive = true;
-    ensurePresets({ store }).then((controller) => {
-      if (alive && controller) setPresets(controller);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [presets, store]);
-
   return React.createElement(
     'div',
     { className: 'dmo-seat' },
     React.createElement(Spectrum, { engine, settings }),
-    React.createElement(PlayerPanel, { engine, settings, presets, t }),
+    React.createElement(PlayerPanel, { engine, settings, t }),
   );
 }
 
@@ -455,9 +441,6 @@ export function apply(ctx) {
   safely(ctx, () => registerTabType(ctx, deps), 'tab type');
   safely(ctx, () => registerTabSeats(ctx, deps), 'tab seats');
 
-  // 预置清单提前预热：等用户点开面板才拉会看到一段空白。
-  void ensurePresets({ store: runtime.store });
-
   // 引擎随插件卸载而销毁，避免留下一个还在播的无声上下文。
   ctx.effect(
     () => () => {
@@ -466,7 +449,6 @@ export function apply(ctx) {
       } catch (_error) {
         // 卸载路径不抛错。
       }
-      disposePresets();
     },
     'dsh-music-on: engine dispose',
   );

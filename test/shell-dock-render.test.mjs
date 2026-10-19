@@ -60,39 +60,101 @@ test('外部播放器必须有属于本插件的关闭出口', () => {
 });
 
 /**
- * 音景入口。
+ * 音景功能已整体移除（用户 m07999：「删除『音景』功能区」）。
  *
- * 存在理由（真实事故）：插件包里躺着七条 CC0 WAV，README 和商店描述都写着
- * 「内置七条音景」，但右下角卡片里**一个播它们的按钮都没有** —— 只有右侧栏标签页
- * 那个 PlayerPanel 挂了 PresetsSection。用户装完照着描述找，找不到，等于功能缺失，
- * 而所有自检都是绿的（文件确实在包里）。所以这条断言盯两件事：
- * 卡片里真的渲染出入口，且点下去走的是自带 WAV 而不是去调平台解析。
+ * 这条断言锁的是「删干净」，而不是「删过」。半个删除最糟：残留的
+ * playSoundscape / 清单拉取 effect 会继续发一次 `/presets/manifest.json` 请求，
+ * 界面上却没有入口 —— 用户看到的是一个只在网络面板里存在的功能。
  */
-test('卡片里必须有音景入口，且点下去播的是自带 WAV', () => {
+test('卡片里不再有音景功能区，且不留下半截清单拉取', () => {
   const source = fs.readFileSync(SRC, 'utf8');
 
-  assert.ok(source.includes("className: 'dmo-soundscapes'"), '卡片里必须有音景区块');
-  assert.ok(source.includes("'data-preset-id': item.id"), '每条音景要能按 id 定位（测试与调试都靠它）');
-  assert.ok(source.includes('playSoundscape'), '必须有音景入队处理函数');
-
-  // 清单必须从宿主静态路由拉，且只取 embedded + ready。
-  // 少了这个过滤，B 站 embed 与外部跳转条目也会冒出来 —— 前者进不了音频图（没有频谱），
-  // 后者点了只是开新页，都和「点一条就出声」的预期相悖。
-  assert.ok(source.includes("`${PRESETS_PATH}/manifest.json`"), '清单必须走 PRESETS_PATH');
-  assert.ok(/source === 'embedded'/.test(source), '音景只取 embedded 条目');
-  assert.ok(/status === 'ready'/.test(source), '音景只取 ready 条目');
-
-  // 播放链路必须是 addManifest（自带 WAV 直链），不能是 addUrl(平台页面)。
-  assert.ok(/engine\.addManifest\(\[\{/.test(source), '音景必须走 engine.addManifest');
-  assert.ok(/loopEnd: item\.loopEnd/.test(source), '必须带上循环点，否则每 5.6 秒断一次');
-  // 音景天生要循环：切到单曲循环，避免默认「列表循环」播完这条跳到下一条音景。
-  assert.ok(/setLoopMode\('one'\)/.test(source), '点音景后必须切到单曲循环');
+  for (const dead of [
+    "className: 'dmo-soundscapes'",
+    'playSoundscape',
+    'soundscapeOpen',
+    "'data-preset-id'",
+  ]) {
+    assert.equal(source.includes(dead), false, `ShellDock.js 仍残留 ${dead}`);
+  }
+  assert.equal(source.includes('manifest.json'), false,
+    '清单拉取 effect 必须一并删掉，否则会继续发一次没人用的请求');
+  assert.equal(/\bsoundscapes\b/.test(source), false, '不得残留 soundscapes 状态');
 });
 
-test('音景区块的类名必须有对应 CSS', () => {
+test('音景相关的样式与文案也要一并清掉', () => {
   const styles = fs.readFileSync(path.join(ROOT, 'src/client/styles.js'), 'utf8');
-  for (const cls of ['dmo-soundscapes', 'dmo-soundscapes-head', 'dmo-soundscapes-body', 'dmo-soundscapes-count']) {
-    assert.ok(styles.includes(`.${cls}`), `styles.js 缺少 .${cls} —— 结构有了但没样式，会渲染成裸文字`);
+  assert.equal(styles.includes('.dmo-soundscapes'), false, 'styles.js 仍残留 .dmo-soundscapes');
+
+  const locale = fs.readFileSync(path.join(ROOT, 'src/client/locale.js'), 'utf8');
+  for (const key of ['dock.soundscapes', 'dock.soundscapeHint', 'dock.soundscapeOn']) {
+    assert.equal(locale.includes(`'${key}'`), false, `locale.js 仍残留 ${key}`);
+  }
+  assert.equal(locale.includes('预置音景'), false, 'locale.js 仍残留「预置音景」文案');
+});
+
+/**
+ * 音景不只是界面层，库里曾整套躺着播放器（控制器 / boot / 分区组件 / 静态路由）。
+ * 只删界面会留下「死模块 + 死路由 + 死资源」：体积照旧、自检照旧、还多发请求。
+ * 下面按模块逐个锁死，任何一块被加回来都会立刻红。
+ */
+test('音景的源码模块与资源目录都已不存在', () => {
+  const gone = [
+    'src/client/presets.js',
+    'src/client/presets-boot.js',
+    'src/client/ui/PresetsSection.jsx',
+    'src/host/presets-static.js',
+    'presets',
+  ];
+  for (const rel of gone) {
+    assert.equal(fs.existsSync(path.join(ROOT, rel)), false, `${rel} 仍存在`);
+  }
+});
+
+test('sources.js / engine.js 不再导出音景构造函数与路由判断', () => {
+  const sources = fs.readFileSync(path.join(ROOT, 'src/client/sources.js'), 'utf8');
+  for (const dead of ['createPresetTrack', 'resolvePresetRoute', 'tracksFromManifest', 'presetId', 'presetMode']) {
+    assert.equal(sources.includes(dead), false, `sources.js 仍残留 ${dead}`);
+  }
+
+  const engine = fs.readFileSync(path.join(ROOT, 'src/client/engine.js'), 'utf8');
+  for (const dead of ['addPresetPlay', 'addManifest', 'createPresetTrack', 'resolvePresetRoute']) {
+    assert.equal(engine.includes(dead), false, `engine.js 仍残留 ${dead}`);
+  }
+});
+
+test('register.js / index.js 不再接线音景', () => {
+  const register = fs.readFileSync(path.join(ROOT, 'src/client/register.js'), 'utf8');
+  for (const dead of ['presets-boot', 'ensurePresets', 'disposePresets', 'getPresetsSync']) {
+    assert.equal(register.includes(dead), false, `register.js 仍残留 ${dead}`);
+  }
+
+  const host = fs.readFileSync(path.join(ROOT, 'src/index.js'), 'utf8');
+  assert.equal(host.includes('presets-static'), false, 'index.js 仍 import 音景静态路由');
+  assert.equal(host.includes('registerPresetsRoute'), false, 'index.js 仍注册音景路由');
+  assert.equal(host.includes('PRESETS_PATH'), false, 'index.js 仍引用 PRESETS_PATH');
+  // 音景是唯一需要 webServer 的地方，它退场后 webServer 依赖也必须退场，
+  // 否则宿主会一直等一个本插件根本用不到的服务。
+  // 断言真实的 inject 声明而不是全文出现次数 —— 文件顶部的注释记录了这段历史，
+  // 全文搜索会把注释误判成残留（第一次就踩了这个）。
+  assert.equal(/export const inject = \[[^\]]*webServer/.test(host), false,
+    'index.js 的 inject 仍声明 webServer');
+});
+
+test('shared.js 不再导出 PRESETS_PATH', () => {
+  const shared = fs.readFileSync(path.join(ROOT, 'src/shared.js'), 'utf8');
+  assert.equal(shared.includes('PRESETS_PATH'), false, 'shared.js 仍残留 PRESETS_PATH');
+});
+
+test('设置页不再有只服务于音景的缓存项', () => {
+  const settings = fs.readFileSync(path.join(ROOT, 'src/client/settings.js'), 'utf8');
+  for (const dead of ['cacheLimitMB', 'CACHE_LIMIT_MIN_MB', 'CACHE_LIMIT_MAX_MB', 'proxyEnabled']) {
+    assert.equal(settings.includes(dead), false, `settings.js 仍残留 ${dead}`);
+  }
+
+  const ui = fs.readFileSync(path.join(ROOT, 'src/client/ui/Settings.jsx'), 'utf8');
+  for (const dead of ['cacheLimitMB', 'proxyEnabled', 'measureCache', 'clearCache', '音景播放器']) {
+    assert.equal(ui.includes(dead), false, `Settings.jsx 仍残留 ${dead}`);
   }
 });
 

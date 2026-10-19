@@ -17,7 +17,7 @@
  * 频谱两种形态：`bar` 贴在屏幕底边通栏（用户要的「页面底部有频谱动画」），
  * `panel` 嵌在卡片里。两者同一份 AnalyserNode 数据，不额外开上下文。
  */
-import { PLUGIN_ID, PRESETS_PATH } from '../../shared.js';
+import { PLUGIN_ID } from '../../shared.js';
 import { intakeLinks, resolvePlatform, summarizeReport, hasDegradedItem } from '../linkintake.js';
 import { entryFrom, isFavorite, subscribeLibrary, toggleFavorite } from '../library.js';
 
@@ -26,7 +26,7 @@ const HIDDEN_KEY = `${PLUGIN_ID}:dock.hidden`;
 /** 频谱关掉之前用的是哪种样式，供快捷开关「开回来」时还原。 */
 const SPECTRUM_MEMO_KEY = `${PLUGIN_ID}:spectrum.memo`;
 
-/** 自检打的那条地址。取预置里唯一 ready 的 B 站条目，保证解析路真的有活可干。 */
+/** 自检打的那条地址。钉一条稳定的 B 站视频，保证解析路真的有活可干。 */
 const BILIBILI_PROBE_URL = 'https://www.bilibili.com/video/BV1Lyw7zPEeo/';
 
 /** 从 localStorage 读一个布尔；隐私模式下 localStorage 会抛，一律降级为默认值。 */
@@ -128,7 +128,6 @@ function serializeTrack(track) {
   }
   if (typeof raw.bvid === 'string' && raw.bvid !== '') record.bvid = raw.bvid;
   if (typeof raw.embedUrl === 'string' && raw.embedUrl !== '') record.embedUrl = raw.embedUrl;
-  if (typeof raw.presetId === 'string' && raw.presetId !== '') record.presetId = raw.presetId;
   // 封面是纯 https 外链（平台图床），不带凭据、不会过期，可以安全落盘。
   // 不存它的话，刷新后恢复的队列全员退回纯黑胶，用户会以为播放列表被降级了。
   if (typeof raw.cover === 'string' && /^https:\/\//i.test(raw.cover)) record.cover = raw.cover;
@@ -196,8 +195,8 @@ function trackLabel(state, t) {
  * 当前曲目的「可收藏页面地址」。
  *
  * 地址由 sources.js 的 trackPageUrl 统一回推（见那里的注释）：引擎内部那份
- * 地址可能是 blob:、相对路径（预置音景 presets/xxx.wav）或 player.bilibili.com
- * 的播放器壳，三者存进收藏都必然打不开。拿不到就返回空串，调用方据此提示原因。
+ * 地址可能是 blob: 或 player.bilibili.com 的播放器壳，两者存进收藏都必然打不开。
+ * 拿不到就返回空串，调用方据此提示原因。
  * @param {object} engine 播放引擎。
  * @returns {string} https 页面地址，或空串。
  */
@@ -354,17 +353,6 @@ export function createShellDock(props) {
     const [note, setNote] = useState(null); // { tone: 'ok'|'bad', text }
     const [dragging, setDragging] = useState(false);
     /**
-     * 预置音景（白噪音 / 雨声 / 咖啡馆 / 鼓点 / 爵士 / Lo-Fi）。
-     *
-     * 为什么这里自己拉清单，而不是复用 `presets-boot.js` 的 createPresets 控制器：
-     * 那个控制器走 IndexedDB 缓存、sha256 校验和它自己的引擎实例，服务于面板形态的
-     * 完整音景库；而右下角这张卡片只需要「点一下就往队列里塞一条自带 WAV」。
-     * 两条路都接进同一个 controller 会出现两套引擎实例抢 AudioContext。
-     * 清单本身是同一份静态资源，没有第二份真相。
-     */
-    const [soundscapes, setSoundscapes] = useState(() => []);
-    const [soundscapeOpen, setSoundscapeOpen] = useState(false);
-    /**
      * 当前曲目是否已收藏。
      *
      * 必须在任何 useCallback 之前声明：依赖数组在渲染期求值，声明到下方会抛
@@ -437,14 +425,19 @@ export function createShellDock(props) {
     // 音量不再有 `vol` 派生常量：它以旋钮自己的 knobValue 为准（拖动时不落盘、
     // 不等 settings 回流），settings.volume 只负责跨刷新持久化，见 applyVolume。
     const spectrumCfg = {
-      style: settings.spectrumStyle || 'bars',
+      style: settings.spectrumStyle || 'dots',
       fps: settings.spectrumFps || 60,
       bars: settings.spectrumBars || 48,
       gain: typeof settings.spectrumGain === 'number' ? settings.spectrumGain : 1,
       glow: settings.spectrumGlow || 'soft',
       height: settings.spectrumHeight || 64,
+      // 宽度百分比交给外壳算像素：Spectrum 只认自己容器的真实宽度。
+      span: Number.isFinite(Number(settings.spectrumSpan)) ? Number(settings.spectrumSpan) : 80,
     };
     const spectrumStyle = spectrumCfg.style;
+    const spectrumSpan = Math.min(100, Math.max(20, spectrumCfg.span));
+    /** 配色主题：只换 CSS 令牌，不动结构。 */
+    const theme = settings.theme || 'whale';
     const spectrumPlacement = settings.spectrumPlacement || 'bar';
     /** 通栏频谱的层级：front 浮在页面前，back 藏在页面里只透出暗纹。 */
     const spectrumDepth = settings.spectrumDepth === 'back' ? 'back' : 'front';
@@ -797,9 +790,9 @@ export function createShellDock(props) {
     /**
      * 收藏 / 取消收藏当前曲目。
      *
-     * 地址一律取 track.pageUrl —— 引擎内部那份地址可能是 blob:、相对路径
-     * （预置音景 presets/xxx.wav）或 player.bilibili.com 的播放器壳，存进去
-     * 重启后必然打不开。pageUrl 由 sources.js 的 trackPageUrl 统一回推成原始页面地址。
+     * 地址一律取 track.pageUrl —— 引擎内部那份地址可能是 blob: 或
+     * player.bilibili.com 的播放器壳，存进去重启后必然打不开。
+     * pageUrl 由 sources.js 的 trackPageUrl 统一回推成原始页面地址。
      */
     const toggleFav = useCallback(() => {
       const track = state.track;
@@ -898,72 +891,6 @@ export function createShellDock(props) {
     const flash = useCallback((text) => {
       flashRef.current({ tone: 'ok', text });
     }, []);
-
-    /**
-     * 拉一次预置音景清单。
-
-     * 只取 `source === 'embedded' && status === 'ready'` 的条目：那七条是插件自带的
-     * 合成 WAV，同源、可循环、能进 AudioContext 拿到真频谱。B 站 embed 与外部平台
-     * 跳转类条目在卡片里没有意义（前者进不了音频图，后者只是开新页），不列出来。
-     *
-     * 失败不抛：音景是附加能力，清单 404 不该让整个音乐库白屏。
-     */
-    useEffect(() => {
-      const controller = typeof AbortController === 'function' ? new AbortController() : null;
-      const run = async () => {
-        if (typeof fetch !== 'function') return;
-        try {
-          const response = await fetch(`${PRESETS_PATH}/manifest.json`, {
-            credentials: 'same-origin',
-            signal: controller ? controller.signal : undefined,
-          });
-          if (!response.ok) return;
-          const body = await response.json();
-          const items = Array.isArray(body && body.items) ? body.items : [];
-          setSoundscapes(items.filter((item) => (
-            item
-            && item.source === 'embedded'
-            && item.status === 'ready'
-            && typeof item.file === 'string'
-            && item.file !== ''
-          )));
-        } catch (_error) {
-          /* 拿不到清单就只是没有音景入口，不影响播放器本体 */
-        }
-      };
-      void run();
-      return () => {
-        if (controller) controller.abort();
-      };
-    }, []);
-
-    /**
-     * 点一条音景 → 入队并开播。
-     *
-     * `playFirst` 只在队列为空时由引擎自己判定（engine.add 里 `current === null`），
-     * 所以这里恒传 true 不会打断正在播的东西。
-     *
-     * loopStart / loopEnd 必须一起带：七条 WAV 都是 5.6 秒的无缝循环切片，
-     * 少了循环点就变成每 5.6 秒停一次再切下一首。
-     */
-    const playSoundscape = guard(async (item) => {
-      if (!engine || !item) return;
-      const position = await engine.addManifest([{
-        id: item.id,
-        name: item.name,
-        url: `${PRESETS_PATH}/${item.file}`,
-        duration: item.duration,
-        loopStart: item.loopStart,
-        loopEnd: item.loopEnd,
-      }], { playFirst: true });
-      if (position >= 0) {
-        // 音景天生要循环，切到单曲循环而不是跟随用户的全局循环设置 ——
-        // 否则默认的「列表循环」会在这一条播完后跳到下一条音景，用户点的是雨声，
-        // 听到的却是鼓点，那是最容易被当成 bug 的行为。
-        engine.setLoopMode('one');
-        flash(t('dock.soundscapeOn', '音景已开始循环播放'));
-      }
-    });
 
     const togglePlay = guard(async () => {
       if (!engine) return;
@@ -1532,12 +1459,23 @@ export function createShellDock(props) {
     h('span', { className: 'dmo-knob-readout', 'aria-hidden': 'true' },
       knobValue <= 0.001 ? '静音' : `${Math.round(knobValue * 100)}`));
 
+    // 循环按钮：显示中文而不是裸枚举值。原先直接把 `state.loopMode`（'all'/'one'/'off'）
+    // 塞进按钮，用户看到的是内码 `all`，看不出这是「列表循环」。走 locale，
+    // 且默认值要与引擎一致（缺省 all）。
+    const loopMode = (state && state.loopMode) || 'all';
+    const loopLabel = loopMode === 'one'
+      ? t('dock.loopOne', '单曲循环')
+      : loopMode === 'off'
+        ? t('dock.loopOff', '不循环')
+        : t('dock.loopAll', '列表循环');
     const loopButton = h('button', {
       type: 'button',
       className: 'dmo-chip',
-      title: t('dock.loop', '循环模式'),
+      'data-loop': loopMode,
+      title: `${t('dock.loop', '循环模式')} · ${loopLabel}`,
+      'aria-label': `${t('dock.loop', '循环模式')}: ${loopLabel}`,
       onClick: () => guard(async () => engine.cycleLoopMode())(),
-    }, (state && state.loopMode) || 'off');
+    }, loopLabel);
 
     // 当前曲目「入了队但播不了」的原因（网易云/QQ 会员曲拿不到直链）。
     // 引擎把原因写在 track.unavailableReason 上，UI 必须把它抬到可见处：
@@ -1571,6 +1509,10 @@ export function createShellDock(props) {
       ref: stackRef,
       style: stackStyle,
       'data-depth': spectrumDepth,
+      // 主题只体现在这个自定义属性上：CSS 里 [data-theme='x'] 覆盖一套令牌。
+      // 挂在 stack 而不是 document 上，是为了不污染宿主页面 —— 但设置分区
+      // 不在 stack 里，所以 Settings 那边单独挂一份（见 Settings.jsx 的根节点）。
+      'data-dmo-theme': theme,
     }, ...children);
 
     /**
@@ -1598,7 +1540,13 @@ export function createShellDock(props) {
         // 通栏频谱走 fixed 贴视口底沿，本来就**不**跟随胶囊位置：
         // 它是「页面底部」的装饰，胶囊挪到哪儿它都该留在底部。
         // 这里绝不能引用 .dmo-dock-stack 的坐标，也不能改成 absolute。
-        style: { height: `${spectrumCfg.height}px` },
+        //
+        // 宽度走 --dmo-span：整条带子按视口百分比铺开并居中，剩下的留白交给
+        // margin auto（不是 transform，避免和 [data-depth] 的层叠/过渡打架）。
+        style: {
+          height: `${spectrumCfg.height}px`,
+          '--dmo-span': `${spectrumSpan}%`,
+        },
       }, props.Spectrum ? h(props.Spectrum, { engine, settings: { ...settings, ...spectrumCfg } }) : null)
       : null;
 
@@ -1749,7 +1697,7 @@ export function createShellDock(props) {
 
     h('div', { className: 'dmo-card' },
       // 黑胶舞台：展开后延续胶囊的黑胶语言，封面来自解析层给的 track.cover。
-      // 没有封面（本地文件、纯预置音景）时退化为纯黑胶，不显示空白 img。
+      // 没有封面（本地文件、直链音频）时退化为纯黑胶，不显示空白 img。
       //
       // 拖动事件挂在**整个舞台**（含封面与元信息），不只挂在黑胶那块小圆盘上：
       // 圆盘只有 68px，用户很难精准按住，之前「拖不动」很可能就是没按中手柄。
@@ -1928,37 +1876,6 @@ export function createShellDock(props) {
         onClick: () => { void runSelfCheck(); },
       }, t('dock.selfCheck', '自检'))),
 
-      // 音景一排：七条自带 WAV 的快捷入口。
-      //
-      // 缺了它，卡片能做的只有「拖文件 / 粘链接」，而插件包里明明躺着七条合成音景
-      // —— 那是最容易被当成功能没做完的地方。这里默认收起成一枚按钮，
-      // 展开才铺开七个 chip，避免把卡片撑得比播放列表还长。
-      soundscapes.length > 0
-        ? h('div', { className: 'dmo-soundscapes' },
-          h('button', {
-            type: 'button',
-            className: `dmo-soundscapes-head${soundscapeOpen ? ' is-open' : ''}`,
-            title: t('dock.soundscapeHint', '自带七条可无缝循环的合成音景'),
-            'aria-expanded': soundscapeOpen,
-            onClick: () => setSoundscapeOpen((prev) => !prev),
-          },
-          h('span', { className: 'dmo-soundscapes-caret' }, soundscapeOpen ? '▾' : '▸'),
-          h('span', { className: 'dmo-soundscapes-title' }, t('dock.soundscapes', '音景')),
-          h('span', { className: 'dmo-soundscapes-count' }, `${soundscapes.length}`)),
-          soundscapeOpen
-            ? h('div', { className: 'dmo-soundscapes-body' },
-              soundscapes.map((item) => h('button', {
-                key: item.id,
-                type: 'button',
-                className: 'dmo-chip',
-                'data-preset-id': item.id,
-                title: item.nameEn ? `${item.name} · ${item.nameEn}` : item.name,
-                disabled: busy,
-                onClick: () => { void playSoundscape(item); },
-              }, item.name || item.id)))
-            : null)
-        : null,
-
       // 播放列表
       //
       // 这不是「队列的另一份 UI」，而是唯一让用户看见「先放什么、后放什么」的地方。
@@ -1983,7 +1900,7 @@ export function createShellDock(props) {
             }, t('dock.clear', '清空'))
             : null),
         queue.length === 0
-          ? h('div', { className: 'dmo-queue-empty' }, t('dock.queueEmpty', '拖入音频，或粘贴链接，或从预置里挑一首'))
+          ? h('div', { className: 'dmo-queue-empty' }, t('dock.queueEmpty', '拖入音频，或粘贴歌单链接'))
           : h('div', { className: 'dmo-queue-list' }, queue.map((item, index) => {
             const active = Boolean(item && state.track && state.track.id === item.id);
             const seconds = typeof item.duration === 'number' ? item.duration : NaN;

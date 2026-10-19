@@ -87,7 +87,6 @@ var __dshMusicOnImpl__ = (() => {
   var API_PREFIX = "/api/dsh-music-on";
   var RESOLVE_PATH = `${API_PREFIX}/resolve`;
   var STREAM_PATH = `${API_PREFIX}/stream`;
-  var PRESETS_PATH = `${API_PREFIX}/presets`;
 
   // src/client/locale.js
   var DICTS = {
@@ -95,7 +94,7 @@ var __dshMusicOnImpl__ = (() => {
       "tab.title": "音乐台",
       "settings.title": "音乐库",
       "guide.title": "音乐台",
-      "guide.description": "播放本地音频、平台歌单与预置音景",
+      "guide.description": "播放本地音频与平台歌单",
       "panel.drop": "把音频文件拖到这里",
       "panel.empty": "暂无播放内容",
       "panel.queue": "播放队列",
@@ -113,6 +112,9 @@ var __dshMusicOnImpl__ = (() => {
       "dock.volume": "音量",
       "dock.volumeHint": "滚轮或拖动调节，单击静音",
       "dock.loop": "循环模式",
+      "dock.loopAll": "列表循环",
+      "dock.loopOne": "单曲循环",
+      "dock.loopOff": "不循环",
       "dock.add": "加入",
       "dock.added": "已加入并开始播放",
       "dock.parsed": "已解析并加入队列",
@@ -124,10 +126,7 @@ var __dshMusicOnImpl__ = (() => {
       "dock.show": "显示音乐库",
       "dock.linkPlaceholder": "粘贴 B站 / 网易云 / QQ音乐 链接或歌单",
       "dock.queued": "已加入队列，按播放键开始",
-      "dock.soundscapes": "音景",
-      "dock.soundscapeHint": "自带七条可无缝循环的合成音景，点一条即开播",
-      "dock.soundscapeOn": "音景已开始循环播放",
-      "dock.queueEmpty": "拖入音频，或粘贴链接，或从预置里挑一首",
+      "dock.queueEmpty": "拖入音频，或粘贴歌单链接",
       "dock.cleared": "播放列表已清空",
       "dock.queueRestored": "已恢复上次的播放列表",
       "dock.queueRestoredPartial": "，另有 {count} 条已失效",
@@ -186,7 +185,7 @@ var __dshMusicOnImpl__ = (() => {
       "tab.title": "Music",
       "settings.title": "Music library",
       "guide.title": "Music",
-      "guide.description": "Local audio, platform playlists, and preset soundscapes",
+      "guide.description": "Local audio and platform playlists",
       "panel.drop": "Drop audio files here",
       "panel.empty": "Nothing playing",
       "panel.queue": "Queue",
@@ -201,6 +200,9 @@ var __dshMusicOnImpl__ = (() => {
       "dock.volume": "Volume",
       "dock.volumeHint": "Scroll or drag to adjust, click to mute",
       "dock.loop": "Loop mode",
+      "dock.loopAll": "Loop list",
+      "dock.loopOne": "Loop one",
+      "dock.loopOff": "No loop",
       "dock.add": "Add",
       "dock.added": "Added to the queue",
       "dock.parsed": "Resolved and queued",
@@ -212,10 +214,7 @@ var __dshMusicOnImpl__ = (() => {
       "dock.show": "Show music library",
       "dock.linkPlaceholder": "Paste a Bilibili / NetEase / QQ Music link or playlist",
       "dock.queued": "Queued — press play to start",
-      "dock.soundscapes": "Soundscapes",
-      "dock.soundscapeHint": "Seven bundled seamless loops — click one to start",
-      "dock.soundscapeOn": "Soundscape looping",
-      "dock.queueEmpty": "Drop audio, paste a link, or pick a preset",
+      "dock.queueEmpty": "Drop audio or paste a link",
       "dock.cleared": "Playlist cleared",
       "dock.queueRestored": "Playlist restored from last time",
       "dock.queueRestoredPartial": " ({count} entries expired)",
@@ -340,7 +339,7 @@ var __dshMusicOnImpl__ = (() => {
   right: 8px;
   bottom: 6px;
   padding: 1px 7px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 999px;
   background: var(--dmo-glass, rgba(255, 255, 255, 0.94));
   color: var(--dmo-fg-dim, #45557a);
@@ -416,7 +415,7 @@ var __dshMusicOnImpl__ = (() => {
 }
 .dmo-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, .12)); }
 .dmo-row.dmo-active {
-  background: var(--dsw-alias-interactive-bg-selected, rgba(77, 107, 254, .14));
+  background: var(--dsw-alias-interactive-bg-selected, rgba(var(--dmo-rgb, 77, 107, 254), .14));
   border-color: var(--dmo-line);
 }
 .dmo-row-glyph {
@@ -582,14 +581,14 @@ var __dshMusicOnImpl__ = (() => {
   gap: 9px;
   max-width: 340px;
   padding: 7px 11px 7px 8px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 999px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(236, 244, 255, 0.72)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(var(--dmo-glass-tint, 236, 244, 255), 0.72)),
     var(--dmo-glass, rgba(255, 255, 255, 0.94));
   box-shadow:
-    0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26)),
-    0 10px 26px rgba(38, 74, 176, 0.22),
+    0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26)),
+    0 10px 26px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
   color: var(--dmo-fg, #16233f);
   font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -605,8 +604,8 @@ var __dshMusicOnImpl__ = (() => {
 .dmo-capsule:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 0 0 4px var(--dmo-halo, rgba(77, 107, 254, 0.3)),
-    0 14px 32px rgba(38, 74, 176, 0.28),
+    0 0 0 4px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.3)),
+    0 14px 32px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
@@ -614,8 +613,8 @@ var __dshMusicOnImpl__ = (() => {
   /* 拖动时不能再用位移做「按下」反馈：那会把胶囊整体挪 1px 而 box 没动，
    * 视觉上像被卡住。改成收紧光晕。 */
   box-shadow:
-    0 0 0 2px var(--dmo-halo, rgba(77, 107, 254, 0.22)),
-    0 4px 12px rgba(38, 74, 176, 0.2);
+    0 0 0 2px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.22)),
+    0 4px 12px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.2);
 }
 
 /* 拖动中：禁用 hover/active 的位移动画，避免与 left/top 的实时位移打架 */
@@ -683,7 +682,7 @@ var __dshMusicOnImpl__ = (() => {
   flex: none;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, var(--dmo-brand-deep, #2f4bd8) 0 26%, transparent 27%),
               conic-gradient(from 210deg, #4d6bfe, #7b95ff, #b9cbff, #4d6bfe);
@@ -712,11 +711,11 @@ var __dshMusicOnImpl__ = (() => {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   background:
     repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px 3px),
     radial-gradient(circle at 50% 50%, #2b3f74 0 30%, #131c33 31% 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(38, 74, 176, 0.3);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.3);
   overflow: hidden;
 }
 
@@ -746,7 +745,7 @@ var __dshMusicOnImpl__ = (() => {
   padding: 0;
   font-size: 0;
   border-color: var(--dmo-brand-deep, #2f4bd8);
-  box-shadow: 0 0 0 2px var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  box-shadow: 0 0 0 2px var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-vinyl-label {
@@ -757,7 +756,7 @@ var __dshMusicOnImpl__ = (() => {
   justify-content: center;
   width: 13px;
   height: 13px;
-  border: 1px solid rgba(47, 75, 216, 0.85);
+  border: 1px solid rgba(var(--dmo-rgb-deeper, 47, 75, 216), 0.85);
   border-radius: 50%;
   background: conic-gradient(from 210deg, #2f4bd8, #4d6bfe, #9fb6ff, #4d6bfe, #2f4bd8);
   color: transparent;
@@ -814,8 +813,8 @@ var __dshMusicOnImpl__ = (() => {
 .dmo-dock[data-dragging='1'] .dmo-capsule,
 .dmo-dock[data-dragging='1'] .dmo-card {
   box-shadow:
-    0 0 0 5px var(--dmo-halo, rgba(77, 107, 254, 0.3)),
-    0 24px 52px rgba(38, 74, 176, 0.34);
+    0 0 0 5px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.3)),
+    0 24px 52px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.34);
 }
 
 /* ---------- 展开卡片里的黑胶舞台 ---------- */
@@ -928,7 +927,7 @@ var __dshMusicOnImpl__ = (() => {
   flex: none;
   width: 22px;
   height: 22px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.6);
   color: var(--dmo-fg-dim, #45557a);
@@ -946,7 +945,7 @@ var __dshMusicOnImpl__ = (() => {
   border-color: transparent;
   color: #fff;
   opacity: 1;
-  box-shadow: 0 2px 10px rgba(77, 107, 254, 0.45);
+  box-shadow: 0 2px 10px rgba(var(--dmo-rgb, 77, 107, 254), 0.45);
 }
 
 .dmo-capsule-btn {
@@ -963,13 +962,13 @@ var __dshMusicOnImpl__ = (() => {
   font-size: 10px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 3px 12px rgba(77, 107, 254, 0.42);
+  box-shadow: 0 3px 12px rgba(var(--dmo-rgb, 77, 107, 254), 0.42);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .dmo-capsule-btn:hover {
   transform: scale(1.06);
-  box-shadow: 0 4px 16px rgba(77, 107, 254, 0.55);
+  box-shadow: 0 4px 16px rgba(var(--dmo-rgb, 77, 107, 254), 0.55);
 }
 
 .dmo-capsule-dot {
@@ -1138,13 +1137,23 @@ var __dshMusicOnImpl__ = (() => {
  */
 .dmo-dock-stack,
 .dmo-card,
-.dmo-embed {
+.dmo-embed,
+.dmo-settings {
+  /* 主题色三元组：整套 rgba(...) 都从这里派生，切换主题只换这一个值。
+   * 之所以要拆出 RGB 三元组而不是只给一个 --dmo-brand：#dmo-line / --dmo-halo
+   * 这类半透明层需要同一个色相配不同 alpha，CSS 没法给十六进制加透明度。 */
+  --dmo-rgb: 77, 107, 254;
+  --dmo-rgb-deep: 38, 74, 176;
+  --dmo-rgb-deeper: 47, 75, 216;
+  --dmo-glass-tint: 236, 244, 255;
+  --dmo-glass-tint-2: 232, 241, 255;
+
   --dmo-fg: #16233f;
   --dmo-fg-dim: #45557a;
   --dmo-fg-faint: #5a6c92;
-  --dmo-line: rgba(77, 107, 254, 0.18);
-  --dmo-hover: rgba(77, 107, 254, 0.08);
-  --dmo-sunken: rgba(77, 107, 254, 0.06);
+  --dmo-line: rgba(var(--dmo-rgb), 0.18);
+  --dmo-hover: rgba(var(--dmo-rgb), 0.08);
+  --dmo-sunken: rgba(var(--dmo-rgb), 0.06);
 
   /* 鲸鱼娘主题的专用色板（蓝白） */
   --dmo-brand: #4d6bfe;
@@ -1152,13 +1161,13 @@ var __dshMusicOnImpl__ = (() => {
   --dmo-brand-deep: #2f4bd8;
   --dmo-glass: rgba(255, 255, 255, 0.94);
   --dmo-glass-2: rgba(243, 248, 255, 0.97);
-  --dmo-edge: rgba(77, 107, 254, 0.28);
-  --dmo-edge-strong: rgba(77, 107, 254, 0.5);
-  --dmo-halo: rgba(77, 107, 254, 0.26);
+  --dmo-edge: rgba(var(--dmo-rgb), 0.28);
+  --dmo-edge-strong: rgba(var(--dmo-rgb), 0.5);
+  --dmo-halo: rgba(var(--dmo-rgb), 0.26);
 
   /* 频谱色板：canvas 通过 getComputedStyle(canvas) 继承读取，所以必须挂在
    * 会包住 canvas 的容器上（.dmo-dock-stack 包胶囊/卡片/通栏频谱三者）。
-   * 蓝白主调：底噪淡蓝 → 柱底中蓝 → 柱顶近白，光晕取高饱和蓝。 */
+   * 底噪淡色 → 柱底中色 → 柱顶近白，光晕取高饱和同色相。 */
   --dmo-spec-base: rgba(150, 200, 255, 0.32);
   --dmo-spec-low: rgba(120, 180, 255, 0.58);
   --dmo-spec-high: rgba(255, 255, 255, 0.98);
@@ -1166,27 +1175,151 @@ var __dshMusicOnImpl__ = (() => {
   color: var(--dmo-fg);
 }
 
-/* 系统级深色兜底（宿主未显式声明主题时生效） */
+/* ---------- 配色主题 ----------
+ *
+ * 每一块只覆盖颜色令牌，结构/间距/字号一概不动 —— 主题只该改颜色。
+ * 顺序要求：必须排在 .dmo-dock-stack 默认块之后、深色块**之前**。
+ * 放深色块之后会把「深色下该用深玻璃」这件事一起盖掉，卡片在深色界面上
+ * 变成一张刺眼的白纸。
+ *
+ * 这里**不能**用 :where() 包起来。早期写成 :where([data-dmo-theme='x'])，
+ * 结果是括号内权重被压到 0，主题块永远输给上面权重 (0,1,0) 的默认块 ——
+ * 七套主题算出来的计算样式完全一致，换主题视觉上毫无变化（真机实测复现）。
+ * 现在用普通属性选择器，与默认块同权 (0,1,0)，靠「排在后面」胜出；
+ * 卡片里更具体的选择器（例如 .dmo-x.dmo-y）仍然能盖过主题。
+ */
+[data-dmo-theme='whale'] {
+  /* 默认主题：与上方锚点同值。写全是为了让「七套主题都自带完整令牌」成为
+   * 可断言的事实 —— 只有 --dmo-rgb 的块会让测试与实际渲染产生分歧。 */
+  --dmo-rgb: 77, 107, 254;
+  --dmo-brand: #4d6bfe;
+}
+
+[data-dmo-theme='aurora'] {
+  --dmo-rgb: 92, 140, 255;
+  --dmo-rgb-deep: 52, 70, 190;
+  --dmo-rgb-deeper: 70, 96, 220;
+  --dmo-glass-tint: 232, 240, 255;
+  --dmo-glass-tint-2: 228, 236, 255;
+  --dmo-brand: #5c8cff;
+  --dmo-brand-soft: #9f7bff;
+  --dmo-brand-deep: #3a4fd8;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(240, 245, 255, 0.97);
+  --dmo-spec-base: rgba(130, 200, 255, 0.32);
+  --dmo-spec-low: rgba(130, 170, 255, 0.6);
+  --dmo-spec-high: rgba(226, 240, 255, 0.98);
+  --dmo-spec-glow: rgba(140, 150, 255, 0.75);
+}
+
+[data-dmo-theme='mint'] {
+  --dmo-rgb: 40, 180, 140;
+  --dmo-rgb-deep: 16, 110, 84;
+  --dmo-rgb-deeper: 18, 138, 99;
+  --dmo-glass-tint: 232, 252, 244;
+  --dmo-glass-tint-2: 226, 249, 239;
+  --dmo-brand: #23b98a;
+  --dmo-brand-soft: #6fe0b6;
+  --dmo-brand-deep: #128a63;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(240, 253, 248, 0.97);
+  --dmo-spec-base: rgba(140, 235, 200, 0.32);
+  --dmo-spec-low: rgba(80, 215, 170, 0.6);
+  --dmo-spec-high: rgba(240, 255, 250, 0.98);
+  --dmo-spec-glow: rgba(60, 220, 170, 0.72);
+}
+
+[data-dmo-theme='sunset'] {
+  --dmo-rgb: 245, 138, 60;
+  --dmo-rgb-deep: 150, 68, 16;
+  --dmo-rgb-deeper: 209, 96, 28;
+  --dmo-glass-tint: 255, 240, 226;
+  --dmo-glass-tint-2: 255, 234, 216;
+  --dmo-brand: #f5863c;
+  --dmo-brand-soft: #ffb26b;
+  --dmo-brand-deep: #d1601c;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(255, 247, 240, 0.97);
+  --dmo-spec-base: rgba(255, 190, 140, 0.32);
+  --dmo-spec-low: rgba(255, 150, 90, 0.6);
+  --dmo-spec-high: rgba(255, 245, 230, 0.98);
+  --dmo-spec-glow: rgba(255, 150, 70, 0.72);
+}
+
+[data-dmo-theme='rose'] {
+  --dmo-rgb: 232, 90, 140;
+  --dmo-rgb-deep: 140, 36, 74;
+  --dmo-rgb-deeper: 194, 58, 107;
+  --dmo-glass-tint: 255, 236, 244;
+  --dmo-glass-tint-2: 255, 230, 240;
+  --dmo-brand: #e85a8c;
+  --dmo-brand-soft: #ff8fb5;
+  --dmo-brand-deep: #c23a6b;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(255, 245, 249, 0.97);
+  --dmo-spec-base: rgba(255, 180, 210, 0.32);
+  --dmo-spec-low: rgba(255, 120, 175, 0.6);
+  --dmo-spec-high: rgba(255, 246, 250, 0.98);
+  --dmo-spec-glow: rgba(255, 110, 170, 0.72);
+}
+
+[data-dmo-theme='neon'] {
+  --dmo-rgb: 0, 210, 190;
+  --dmo-rgb-deep: 0, 70, 90;
+  --dmo-rgb-deeper: 0, 140, 130;
+  --dmo-glass-tint: 224, 255, 250;
+  --dmo-glass-tint-2: 216, 253, 248;
+  --dmo-brand: #00d2be;
+  --dmo-brand-soft: #6bffe8;
+  --dmo-brand-deep: #00998c;
+  --dmo-glass: rgba(250, 255, 254, 0.94);
+  --dmo-glass-2: rgba(238, 255, 253, 0.97);
+  --dmo-spec-base: rgba(120, 255, 235, 0.34);
+  --dmo-spec-low: rgba(0, 235, 210, 0.62);
+  --dmo-spec-high: rgba(235, 255, 252, 0.99);
+  --dmo-spec-glow: rgba(0, 255, 220, 0.78);
+}
+
+[data-dmo-theme='mono'] {
+  --dmo-rgb: 120, 124, 132;
+  --dmo-rgb-deep: 48, 52, 58;
+  --dmo-rgb-deeper: 75, 85, 99;
+  --dmo-glass-tint: 242, 243, 245;
+  --dmo-glass-tint-2: 236, 238, 241;
+  --dmo-brand: #6b7280;
+  --dmo-brand-soft: #9aa1ab;
+  --dmo-brand-deep: #4b5563;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(246, 247, 248, 0.97);
+  --dmo-spec-base: rgba(190, 195, 202, 0.32);
+  --dmo-spec-low: rgba(150, 156, 165, 0.6);
+  --dmo-spec-high: rgba(252, 252, 253, 0.98);
+  --dmo-spec-glow: rgba(160, 168, 178, 0.7);
+}
+
+/*
+ * 系统级深色兜底（宿主未显式声明主题时生效）。
+ *
+ * 只覆盖「前景 / 玻璃 / 描边透明度」这三类，**不覆盖色相**：
+ * 色相由主题块决定，深色只是把它换成深玻璃与更高的描边透明度。
+ * 早先这里写死了蓝色系的 spec 色板，导致换成薄荷/落日主题后频谱仍是蓝的。
+ */
 @media (prefers-color-scheme: dark) {
   .dmo-dock-stack,
   .dmo-card,
-  .dmo-embed {
-    --dmo-fg: #eaf1ff;
-    --dmo-fg-dim: #a8bae0;
-    --dmo-fg-faint: #8f9fc4;
-    --dmo-line: rgba(120, 160, 255, 0.24);
-    --dmo-hover: rgba(120, 160, 255, 0.12);
-    --dmo-sunken: rgba(120, 160, 255, 0.09);
+  .dmo-embed,
+  .dmo-settings {
+    --dmo-fg: #eef3ff;
+    --dmo-fg-dim: #a8b4cf;
+    --dmo-fg-faint: #8b96b3;
+    --dmo-line: rgba(var(--dmo-rgb), 0.3);
+    --dmo-hover: rgba(var(--dmo-rgb), 0.16);
+    --dmo-sunken: rgba(var(--dmo-rgb), 0.12);
     --dmo-glass: rgba(20, 28, 48, 0.94);
     --dmo-glass-2: rgba(26, 36, 60, 0.96);
-    --dmo-edge: rgba(120, 160, 255, 0.3);
-    --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-    --dmo-halo: rgba(80, 120, 255, 0.34);
-    /* 深色主题下柱顶不能是纯白，否则在深蓝背景上炸开；改用略带蓝的亮白。 */
-    --dmo-spec-base: rgba(130, 180, 255, 0.3);
-    --dmo-spec-low: rgba(100, 160, 255, 0.55);
-    --dmo-spec-high: rgba(226, 240, 255, 0.96);
-    --dmo-spec-glow: rgba(110, 175, 255, 0.8);
+    --dmo-edge: rgba(var(--dmo-rgb), 0.42);
+    --dmo-edge-strong: rgba(var(--dmo-rgb), 0.66);
+    --dmo-halo: rgba(var(--dmo-rgb), 0.36);
   }
 }
 
@@ -1196,22 +1329,19 @@ var __dshMusicOnImpl__ = (() => {
  */
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-dock-stack,
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-card,
-:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-embed {
-  --dmo-fg: #eaf1ff;
-  --dmo-fg-dim: #a8bae0;
-  --dmo-fg-faint: #8f9fc4;
-  --dmo-line: rgba(120, 160, 255, 0.24);
-  --dmo-hover: rgba(120, 160, 255, 0.12);
-  --dmo-sunken: rgba(120, 160, 255, 0.09);
+:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-embed,
+:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-settings {
+  --dmo-fg: #eef3ff;
+  --dmo-fg-dim: #a8b4cf;
+  --dmo-fg-faint: #8b96b3;
+  --dmo-line: rgba(var(--dmo-rgb), 0.3);
+  --dmo-hover: rgba(var(--dmo-rgb), 0.16);
+  --dmo-sunken: rgba(var(--dmo-rgb), 0.12);
   --dmo-glass: rgba(20, 28, 48, 0.94);
   --dmo-glass-2: rgba(26, 36, 60, 0.96);
-  --dmo-edge: rgba(120, 160, 255, 0.3);
-  --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-  --dmo-halo: rgba(80, 120, 255, 0.34);
-  --dmo-spec-base: rgba(130, 180, 255, 0.3);
-  --dmo-spec-low: rgba(100, 160, 255, 0.55);
-  --dmo-spec-high: rgba(226, 240, 255, 0.96);
-  --dmo-spec-glow: rgba(110, 175, 255, 0.8);
+  --dmo-edge: rgba(var(--dmo-rgb), 0.42);
+  --dmo-edge-strong: rgba(var(--dmo-rgb), 0.66);
+  --dmo-halo: rgba(var(--dmo-rgb), 0.36);
 }
 
 .dmo-card {
@@ -1222,14 +1352,14 @@ var __dshMusicOnImpl__ = (() => {
   padding: 12px;
   /* 与胶囊同一套语言：冷白玻璃 + 鲸蓝描边 + 外圈蓝雾。
    * 顶部还有一道极细的高光（::before），让它有厚度而不是一片纯色。 */
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(232, 241, 255, 0.78)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(var(--dmo-glass-tint-2, 232, 241, 255), 0.78)),
     var(--dmo-glass, rgba(255, 255, 255, 0.94));
   box-shadow:
-    0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26)),
-    0 18px 44px rgba(38, 74, 176, 0.26),
+    0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26)),
+    0 18px 44px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(18px) saturate(1.1);
   max-height: min(560px, calc(100vh - 120px));
@@ -1254,8 +1384,8 @@ var __dshMusicOnImpl__ = (() => {
 @media (prefers-color-scheme: dark) {
   .dmo-card {
     background:
-      linear-gradient(180deg, rgba(34, 46, 76, 0.92), rgba(20, 28, 48, 0.9)),
-      var(--dmo-glass, rgba(20, 28, 48, 0.94));
+      linear-gradient(180deg, rgba(var(--dmo-rgb-dark, 34, 46, 76), 0.92), rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.9)),
+      var(--dmo-glass, rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.94));
     box-shadow:
       0 0 0 3px var(--dmo-halo, rgba(80, 120, 255, 0.34)),
       0 18px 44px rgba(0, 0, 0, 0.5),
@@ -1265,8 +1395,8 @@ var __dshMusicOnImpl__ = (() => {
 
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-card {
   background:
-    linear-gradient(180deg, rgba(34, 46, 76, 0.92), rgba(20, 28, 48, 0.9)),
-    var(--dmo-glass, rgba(20, 28, 48, 0.94));
+    linear-gradient(180deg, rgba(var(--dmo-rgb-dark, 34, 46, 76), 0.92), rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.9)),
+    var(--dmo-glass, rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.94));
   box-shadow:
     0 0 0 3px var(--dmo-halo, rgba(80, 120, 255, 0.34)),
     0 18px 44px rgba(0, 0, 0, 0.5),
@@ -1357,7 +1487,7 @@ var __dshMusicOnImpl__ = (() => {
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 50%;
   /* 主按钮：鲸蓝实心 + 外圈光晕。这是整个卡片里唯一的强色块，
    * 用户的视线第一秒要能落在它上面。 */
@@ -1365,13 +1495,13 @@ var __dshMusicOnImpl__ = (() => {
   color: #fff;
   font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(77, 107, 254, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 14px rgba(var(--dmo-rgb, 77, 107, 254), 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .dmo-play:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(77, 107, 254, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6px 18px rgba(var(--dmo-rgb, 77, 107, 254), 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .dmo-play:disabled {
@@ -1409,14 +1539,14 @@ var __dshMusicOnImpl__ = (() => {
     linear-gradient(90deg,
       var(--dmo-brand, #4d6bfe) 0,
       var(--dmo-brand-soft, #7b95ff) var(--dmo-seek-p, 0%),
-      rgba(77, 107, 254, 0.18) var(--dmo-seek-p, 0%),
-      rgba(77, 107, 254, 0.18) 100%);
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.18) var(--dmo-seek-p, 0%),
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.18) 100%);
 }
 
 .dmo-seek::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: rgba(77, 107, 254, 0.18);
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.18);
 }
 
 .dmo-seek::-moz-range-progress {
@@ -1434,7 +1564,7 @@ var __dshMusicOnImpl__ = (() => {
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--dmo-brand, #4d6bfe);
-  box-shadow: 0 1px 4px rgba(77, 107, 254, 0.5);
+  box-shadow: 0 1px 4px rgba(var(--dmo-rgb, 77, 107, 254), 0.5);
 }
 
 .dmo-seek::-moz-range-thumb {
@@ -1443,7 +1573,7 @@ var __dshMusicOnImpl__ = (() => {
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--dmo-brand, #4d6bfe);
-  box-shadow: 0 1px 4px rgba(77, 107, 254, 0.5);
+  box-shadow: 0 1px 4px rgba(var(--dmo-rgb, 77, 107, 254), 0.5);
 }
 
 .dmo-seek:disabled {
@@ -1483,7 +1613,7 @@ var __dshMusicOnImpl__ = (() => {
   border-radius: 50%;
   background:
     conic-gradient(from -135deg,
-      rgba(77, 107, 254, 0.14) 0deg 270deg,
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.14) 0deg 270deg,
       transparent 270deg 360deg);
 }
 
@@ -1505,7 +1635,7 @@ var __dshMusicOnImpl__ = (() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 50%;
   background: linear-gradient(160deg, #ffffff, #eef2ff);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(20, 22, 26, 0.16);
@@ -1546,7 +1676,7 @@ var __dshMusicOnImpl__ = (() => {
 }
 
 .dmo-knob:hover .dmo-knob-cap {
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-mixer {
@@ -1570,70 +1700,35 @@ var __dshMusicOnImpl__ = (() => {
 .dmo-chip {
   flex: none;
   padding: 2px 8px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 999px;
-  background: rgba(77, 107, 254, 0.06);
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.06);
   color: var(--dmo-fg-dim);
   font: inherit;
   font-size: 11px;
   cursor: pointer;
+  /* 循环按钮的文字是「列表循环/单曲循环/不循环」，比原先的裸枚举 all 长得多。
+     不锁不换行的话，走带行空间紧张时会被压成两行、把整行撑高。 */
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 循环模式换档时给一点状态色，让「现在是哪种循环」不用凑近看字。 */
+.dmo-chip[data-loop='one'] {
+  color: var(--dmo-brand-deep, #2f4bd8);
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.12);
+}
+
+.dmo-chip[data-loop='off'] {
+  opacity: 0.72;
 }
 
 .dmo-chip:hover {
   color: var(--dmo-brand-deep, #2f4bd8);
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
-  background: rgba(77, 107, 254, 0.12);
-}
-
-/* ---------- 音景一排（卡片内的七条自带音景） ---------- */
-.dmo-soundscapes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.dmo-soundscapes-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--dmo-fg-dim);
-  font: inherit;
-  font-size: 11.5px;
-  cursor: pointer;
-}
-
-.dmo-soundscapes-head:hover {
-  color: var(--dmo-brand-deep, #2f4bd8);
-}
-
-.dmo-soundscapes-caret {
-  width: 9px;
-  font-size: 9px;
-  opacity: 0.75;
-}
-
-.dmo-soundscapes-title {
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.dmo-soundscapes-count {
-  min-width: 16px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--dmo-hover);
-  color: var(--dmo-brand, #4d6bfe);
-  font-size: 10px;
-  text-align: center;
-}
-
-.dmo-soundscapes-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.12);
 }
 
 /* ---------- 链接输入 ---------- */
@@ -1646,7 +1741,7 @@ var __dshMusicOnImpl__ = (() => {
   flex: 1;
   min-width: 0;
   padding: 6px 9px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.72);
   color: inherit;
@@ -1667,7 +1762,7 @@ var __dshMusicOnImpl__ = (() => {
 .dmo-btn {
   flex: none;
   padding: 6px 12px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.6);
   color: inherit;
@@ -1678,15 +1773,15 @@ var __dshMusicOnImpl__ = (() => {
 }
 
 .dmo-btn:hover:not(:disabled) {
-  background: rgba(77, 107, 254, 0.1);
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.1);
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-primary {
   border-color: transparent;
   background: linear-gradient(160deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
   color: #fff;
-  box-shadow: 0 3px 12px rgba(77, 107, 254, 0.34);
+  box-shadow: 0 3px 12px rgba(var(--dmo-rgb, 77, 107, 254), 0.34);
 }
 
 .dmo-primary:hover:not(:disabled) {
@@ -1704,7 +1799,7 @@ var __dshMusicOnImpl__ = (() => {
   margin-left: 4px;
   color: var(--dmo-fg-dim);
   border-style: dashed;
-  border-color: var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border-color: var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
 }
 
 .dmo-selfcheck:hover:not(:disabled) {
@@ -1796,7 +1891,7 @@ var __dshMusicOnImpl__ = (() => {
 }
 
 .dmo-queue-row--active {
-  background: var(--dsw-alias-bg-active, rgba(77, 107, 254, 0.12));
+  background: var(--dsw-alias-bg-active, rgba(var(--dmo-rgb, 77, 107, 254), 0.12));
 }
 
 .dmo-queue-index {
@@ -1902,9 +1997,9 @@ var __dshMusicOnImpl__ = (() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px dashed var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 2px dashed var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 14px;
-  background: var(--dmo-hover, rgba(77, 107, 254, 0.08));
+  background: var(--dmo-hover, rgba(var(--dmo-rgb, 77, 107, 254), 0.08));
   color: var(--dmo-brand, #4d6bfe);
   font-size: 12px;
   font-weight: 600;
@@ -1944,20 +2039,25 @@ var __dshMusicOnImpl__ = (() => {
 /* ---------- 底部通栏频谱 ---------- */
 .dmo-barspectrum {
   position: fixed;
-  left: 0;
-  right: 0;
+  /* 宽度走 --dmo-span（设置项 spectrumSpan，20-100%）：
+   * left 用 calc 算出居中偏移，right 置 auto —— 若同时留 left/right，
+   * width 会被忽略，带子永远满宽，「频谱太短」的另一半也修不好。 */
+  left: calc((100% - var(--dmo-span, 80%)) / 2);
+  right: auto;
+  width: var(--dmo-span, 80%);
   bottom: 0;
   /* 高度由 ShellDock 内联注入（设置项 spectrumHeight），这里只留兜底值 */
   height: 64px;
   opacity: 0.92;
   pointer-events: none;
   z-index: 0;
-  transition: opacity 0.28s ease, filter 0.28s ease;
-  /* 底沿一层极淡的蓝雾，把整条频谱托住，不让它在页面底边「飘着」。 */
-  background: linear-gradient(180deg, transparent 0%, rgba(77, 107, 254, 0.06) 60%, rgba(77, 107, 254, 0.12) 100%);
+  transition: opacity 0.28s ease, filter 0.28s ease, width 0.18s ease, left 0.18s ease;
+  /* 底沿一层极淡的同色雾，把整条频谱托住，不让它在页面底边「飘着」。 */
+  background: linear-gradient(180deg, transparent 0%, rgba(var(--dmo-rgb), 0.06) 60%, rgba(var(--dmo-rgb), 0.12) 100%);
 }
 
-/* 两侧竖向边界线：用户参考图里的那两道「框」，让频谱读起来是一条被框住的带子。 */
+/* 两侧竖向边界线：用户参考图里的那两道「框」，让频谱读起来是一条被框住的带子。
+ * 贴在带子自己的两侧（0），不是视口两侧 —— 带子收窄后仍要贴着内容边界。 */
 .dmo-barspectrum::before,
 .dmo-barspectrum::after {
   content: '';
@@ -1969,8 +2069,8 @@ var __dshMusicOnImpl__ = (() => {
   opacity: 0.55;
 }
 
-.dmo-barspectrum::before { left: 18px; }
-.dmo-barspectrum::after { right: 18px; }
+.dmo-barspectrum::before { left: 0; }
+.dmo-barspectrum::after { right: 0; }
 
 /*
  * 层级二选一（设置项 spectrumDepth）：
@@ -2103,63 +2203,28 @@ var __dshMusicOnImpl__ = (() => {
  * 因此不能只抄卡片的配色锚点 —— 必须自带一套前景与描边，
  * 否则浅色主题下同样会出现「字和底同一亮度」。
  * 这里只固定前景色与分隔线，背景保持透明让宿主底板透出来。
+ *
+ * 颜色令牌一律不在这里重复定义：.dmo-settings 已并入文件上方那段共享令牌块
+ * 与主题块的选择器列表。早先它自己硬编码了一整套（--dmo-brand: #4d6bfe 等），
+ * 又排在那 7 个主题块之后，于是设置页永远显示鲸鱼蓝、换主题只改播放器不改设置页。
  */
 .dmo-settings {
-  --dmo-fg: #16233f;
-  --dmo-fg-dim: #45557a;
-  --dmo-fg-faint: #5a6c92;
-  --dmo-line: rgba(77, 107, 254, 0.18);
-  --dmo-hover: rgba(77, 107, 254, 0.08);
-  --dmo-sunken: rgba(77, 107, 254, 0.06);
-  --dmo-brand: #4d6bfe;
-  --dmo-brand-soft: #7b95ff;
-  --dmo-brand-deep: #2f4bd8;
-  --dmo-glass: rgba(255, 255, 255, 0.94);
-  --dmo-edge: rgba(77, 107, 254, 0.28);
-  --dmo-edge-strong: rgba(77, 107, 254, 0.5);
-  --dmo-halo: rgba(77, 107, 254, 0.26);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 2px 0 8px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--dmo-line);
+  border-radius: 14px;
+  /* 必须自带底色。设置分区是别人的弹窗里的一块「外来内容」，宿主那层是半透明的，
+   * 早前这里没写 background，于是 --dmo-fg-faint(#5a6c92) 直接落在宿主的
+   * rgba(132,122,98,0.5) 面板上 —— 实测对比度只有 2.0:1，11.5px 的说明文字
+   * 在真机上几乎读不出来（截图里「长期保留的链接…」那行几乎和背景同色）。
+   * 用与卡片同一套玻璃令牌，深色块会把 --dmo-glass-2 翻成深玻璃，两边都自洽。 */
+  background: var(--dmo-glass-2, rgba(243, 248, 255, 0.97));
   container-type: inline-size;
   color: var(--dmo-fg);
   font-size: 13px;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .dmo-settings {
-    --dmo-fg: #eaf1ff;
-    --dmo-fg-dim: #a8bae0;
-    --dmo-fg-faint: #8f9fc4;
-    --dmo-line: rgba(120, 160, 255, 0.24);
-    --dmo-hover: rgba(120, 160, 255, 0.12);
-    --dmo-sunken: rgba(120, 160, 255, 0.09);
-    --dmo-glass: rgba(20, 28, 48, 0.94);
-    --dmo-edge: rgba(120, 160, 255, 0.3);
-    --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-    --dmo-brand: #8aa6ff;
-    --dmo-brand-soft: #b9ccff;
-    --dmo-brand-deep: #5c7cff;
-    --dmo-halo: rgba(80, 120, 255, 0.34);
-  }
-}
-
-:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-settings {
-  --dmo-fg: #eaf1ff;
-  --dmo-fg-dim: #a8bae0;
-  --dmo-fg-faint: #8f9fc4;
-  --dmo-line: rgba(120, 160, 255, 0.24);
-  --dmo-hover: rgba(120, 160, 255, 0.12);
-  --dmo-sunken: rgba(120, 160, 255, 0.09);
-  --dmo-glass: rgba(20, 28, 48, 0.94);
-  --dmo-edge: rgba(120, 160, 255, 0.3);
-  --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-  --dmo-brand: #8aa6ff;
-  --dmo-brand-soft: #b9ccff;
-  --dmo-brand-deep: #5c7cff;
-  --dmo-halo: rgba(80, 120, 255, 0.34);
 }
 
 .dmo-settings-head {
@@ -2310,7 +2375,7 @@ var __dshMusicOnImpl__ = (() => {
   border-radius: 50%;
   background: linear-gradient(180deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
   border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(77, 107, 254, 0.28)), 0 0 8px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28)), 0 0 8px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
   cursor: pointer;
 }
 
@@ -2320,12 +2385,12 @@ var __dshMusicOnImpl__ = (() => {
   border: 2px solid #fff;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
-  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   cursor: pointer;
 }
 
 .dmo-range:focus-visible {
-  box-shadow: 0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
 }
 
 .dmo-range-value {
@@ -2386,7 +2451,7 @@ var __dshMusicOnImpl__ = (() => {
 
 .dmo-switch:checked {
   background: linear-gradient(90deg, var(--dmo-brand-deep, #2f4bd8), var(--dmo-brand-soft, #7b95ff));
-  box-shadow: 0 0 8px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 8px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
 }
 
 .dmo-switch:checked::after {
@@ -2723,14 +2788,17 @@ var __dshMusicOnImpl__ = (() => {
   // src/client/settings.js
   var NS = "dsh-music-on";
   var STORAGE_KEY = "dsh-music-on:settings";
-  var SPECTRUM_STYLES = ["dots", "bars", "line", "wave", "off"];
+  var SPECTRUM_STYLES = ["dots", "bars", "line", "wave", "blocks", "mirror", "off"];
   var SPECTRUM_FPS = [30, 60];
   var SPECTRUM_PLACEMENTS = ["bar", "panel"];
   var SPECTRUM_DEPTHS = ["front", "back"];
   var SPECTRUM_GLOWS = ["off", "soft", "strong"];
+  var SPECTRUM_SPAN_MIN = 20;
+  var SPECTRUM_SPAN_MAX = 100;
+  var SPECTRUM_BARS_MIN = 16;
+  var SPECTRUM_BARS_MAX = 160;
+  var THEMES = ["whale", "aurora", "mint", "sunset", "rose", "neon", "mono"];
   var LOOP_MODES = ["all", "one", "off"];
-  var CACHE_LIMIT_MIN_MB = 64;
-  var CACHE_LIMIT_MAX_MB = 4096;
   var DOCK_SIZES = ["compact", "normal", "wide"];
   var AUTOPLAY_TARGETS = ["both", "link", "file", "off"];
   var PLATFORM_LIMIT_MIN = 5;
@@ -2742,12 +2810,14 @@ var __dshMusicOnImpl__ = (() => {
     spectrumPlacement: "bar",
     spectrumDepth: "front",
     spectrumBars: 48,
+    /** 频谱横向铺开宽度，占视口百分比。80 = 铺满八成，两侧各留一成。 */
+    spectrumSpan: 80,
     spectrumGlow: "soft",
     spectrumGain: 1,
     spectrumHeight: 64,
+    /** 配色主题：只换颜色，不动布局。whale 是 DeepSeek 鲸鱼蓝白。 */
+    theme: "whale",
     loopMode: "all",
-    cacheLimitMB: 512,
-    proxyEnabled: true,
     allowAutoplay: true,
     autoplayTarget: "both",
     crossfadeSec: 0,
@@ -2777,17 +2847,19 @@ var __dshMusicOnImpl__ = (() => {
     {
       key: "spectrumStyle",
       kind: "select",
-      type: "SpectrumStyle = 'dots' | 'bars' | 'line' | 'wave' | 'off'",
+      type: "SpectrumStyle = 'dots' | 'bars' | 'line' | 'wave' | 'blocks' | 'mirror' | 'off'",
       default: DEFAULT_SETTINGS.spectrumStyle,
       options: [
         { value: "dots", label: "圆点（蓝白）" },
         { value: "bars", label: "粗柱" },
+        { value: "blocks", label: "方块阵列" },
+        { value: "mirror", label: "对称声波" },
         { value: "line", label: "折线" },
-        { value: "wave", label: "波形" },
+        { value: "wave", label: "时域波形" },
         { value: "off", label: "关闭" }
       ],
       label: "频谱样式",
-      help: "关闭后完全不创建 canvas 与动画循环，最省电。"
+      help: "七种样式都有真实绘制实现。关闭后完全不创建 canvas 与动画循环，最省电。"
     },
     {
       key: "spectrumFps",
@@ -2828,13 +2900,24 @@ var __dshMusicOnImpl__ = (() => {
     {
       key: "spectrumBars",
       kind: "range",
-      type: "number (16-96)",
+      type: "number (16-160)",
       default: DEFAULT_SETTINGS.spectrumBars,
-      min: 16,
-      max: 96,
+      min: SPECTRUM_BARS_MIN,
+      max: SPECTRUM_BARS_MAX,
       step: 8,
       label: "频谱柱数",
-      help: "柱子越多越细腻，代价是每帧绘制量线性增长。"
+      help: "柱子越多越细腻，代价是每帧绘制量线性增长。要与「频谱宽度」一起调：宽铺 + 柱多才是满屏细密频谱。"
+    },
+    {
+      key: "spectrumSpan",
+      kind: "range",
+      type: "number (20-100)",
+      default: DEFAULT_SETTINGS.spectrumSpan,
+      min: SPECTRUM_SPAN_MIN,
+      max: SPECTRUM_SPAN_MAX,
+      step: 5,
+      label: "频谱宽度 (%)",
+      help: "整条频谱占窗口宽度的比例。之前它只有固定 286px，看起来像一小撮；调到 100 就是满铺。"
     },
     {
       key: "spectrumGain",
@@ -2863,13 +2946,30 @@ var __dshMusicOnImpl__ = (() => {
     {
       key: "spectrumHeight",
       kind: "range",
-      type: "number (32-160)",
+      type: "number (32-200)",
       default: DEFAULT_SETTINGS.spectrumHeight,
       min: 32,
-      max: 160,
+      max: 200,
       step: 8,
       label: "频谱高度 (px)",
       help: "贴底通栏与嵌入两种位置都按这个高度渲染。"
+    },
+    {
+      key: "theme",
+      kind: "select",
+      type: "Theme = 'whale' | 'aurora' | 'mint' | 'sunset' | 'rose' | 'neon' | 'mono'",
+      default: DEFAULT_SETTINGS.theme,
+      options: [
+        { value: "whale", label: "鲸鱼蓝白（默认）" },
+        { value: "aurora", label: "极光青紫" },
+        { value: "mint", label: "薄荷绿" },
+        { value: "sunset", label: "落日橙" },
+        { value: "rose", label: "玫瑰粉" },
+        { value: "neon", label: "霓虹赛博" },
+        { value: "mono", label: "极简灰白" }
+      ],
+      label: "配色主题",
+      help: "只换颜色，不动布局与尺寸。卡片、胶囊、频谱、设置分区会一起换。"
     },
     {
       key: "loopMode",
@@ -2883,25 +2983,6 @@ var __dshMusicOnImpl__ = (() => {
       ],
       label: "默认循环模式",
       help: "仅作为新会话的初始值，播放器上的按钮仍可临时切换。"
-    },
-    {
-      key: "cacheLimitMB",
-      kind: "range",
-      type: "number (64-4096)",
-      default: DEFAULT_SETTINGS.cacheLimitMB,
-      min: CACHE_LIMIT_MIN_MB,
-      max: CACHE_LIMIT_MAX_MB,
-      step: 64,
-      label: "缓存上限 (MB)",
-      help: "音景文件本地缓存的总容量上限，超出后按最近最少使用淘汰。"
-    },
-    {
-      key: "proxyEnabled",
-      kind: "boolean",
-      type: "boolean",
-      default: DEFAULT_SETTINGS.proxyEnabled,
-      label: "平台代理下载",
-      help: "关掉后只使用随插件分发的 seed 音景，不发起任何额外网络请求。"
     },
     {
       key: "allowAutoplay",
@@ -3031,20 +3112,20 @@ var __dshMusicOnImpl__ = (() => {
     const loopMode = LOOP_MODES.includes(raw.loopMode) ? raw.loopMode : DEFAULT_SETTINGS.loopMode;
     const spectrumPlacement = SPECTRUM_PLACEMENTS.includes(raw.spectrumPlacement) ? raw.spectrumPlacement : DEFAULT_SETTINGS.spectrumPlacement;
     const spectrumDepth = SPECTRUM_DEPTHS.includes(raw.spectrumDepth) ? raw.spectrumDepth : DEFAULT_SETTINGS.spectrumDepth;
-    const cacheLimitMB = toNumber(
-      raw.cacheLimitMB,
-      DEFAULT_SETTINGS.cacheLimitMB,
-      CACHE_LIMIT_MIN_MB,
-      CACHE_LIMIT_MAX_MB
-    );
-    const spectrumBars = Math.round(toNumber(raw.spectrumBars, DEFAULT_SETTINGS.spectrumBars, 16, 96) / 8) * 8;
+    const spectrumBars = Math.round(
+      toNumber(raw.spectrumBars, DEFAULT_SETTINGS.spectrumBars, SPECTRUM_BARS_MIN, SPECTRUM_BARS_MAX) / 8
+    ) * 8;
+    const spectrumSpan = Math.round(
+      toNumber(raw.spectrumSpan, DEFAULT_SETTINGS.spectrumSpan, SPECTRUM_SPAN_MIN, SPECTRUM_SPAN_MAX) / 5
+    ) * 5;
     const spectrumGain = roundTo(
       toNumber(raw.spectrumGain, DEFAULT_SETTINGS.spectrumGain, 0.5, 4),
       0.1
     );
     const spectrumHeight = Math.round(
-      toNumber(raw.spectrumHeight, DEFAULT_SETTINGS.spectrumHeight, 32, 160) / 8
+      toNumber(raw.spectrumHeight, DEFAULT_SETTINGS.spectrumHeight, 32, 200) / 8
     ) * 8;
+    const theme = THEMES.includes(raw.theme) ? raw.theme : DEFAULT_SETTINGS.theme;
     const spectrumGlow = SPECTRUM_GLOWS.includes(raw.spectrumGlow) ? raw.spectrumGlow : DEFAULT_SETTINGS.spectrumGlow;
     const autoplayTarget = AUTOPLAY_TARGETS.includes(raw.autoplayTarget) ? raw.autoplayTarget : DEFAULT_SETTINGS.autoplayTarget;
     const dockSize = DOCK_SIZES.includes(raw.dockSize) ? raw.dockSize : DEFAULT_SETTINGS.dockSize;
@@ -3062,12 +3143,12 @@ var __dshMusicOnImpl__ = (() => {
       spectrumPlacement,
       spectrumDepth,
       spectrumBars,
+      spectrumSpan,
       spectrumGain,
       spectrumGlow,
       spectrumHeight,
+      theme,
       loopMode,
-      cacheLimitMB: Math.round(cacheLimitMB),
-      proxyEnabled: toBool(raw.proxyEnabled, DEFAULT_SETTINGS.proxyEnabled),
       allowAutoplay: toBool(raw.allowAutoplay, DEFAULT_SETTINGS.allowAutoplay),
       autoplayTarget,
       crossfadeSec,
@@ -3258,9 +3339,9 @@ var __dshMusicOnImpl__ = (() => {
     };
   }
   function useSettings(react, store) {
-    const { useState: useState5, useEffect: useEffect6 } = react;
-    const [snapshot, setSnapshot] = useState5(() => store && typeof store.get === "function" ? store.get() : null);
-    useEffect6(() => {
+    const { useState: useState4, useEffect: useEffect5 } = react;
+    const [snapshot, setSnapshot] = useState4(() => store && typeof store.get === "function" ? store.get() : null);
+    useEffect5(() => {
       if (!store || typeof store.subscribe !== "function") return void 0;
       const off = store.subscribe((next) => setSnapshot(next));
       return () => {
@@ -3414,12 +3495,9 @@ var __dshMusicOnImpl__ = (() => {
       sourceUrl: parts.sourceUrl ?? null,
       /** 封面图 URL。B 站由解析层提供；本地文件可后填 objectURL；空表示走黑胶兜底。 */
       cover: parts.cover ?? null,
-      presetId: parts.presetId ?? null,
       unavailableReason: parts.unavailableReason ?? null,
       loopStart: parts.loopStart ?? null,
       loopEnd: parts.loopEnd ?? null,
-      /** presets.play() 的 mode，引擎与 UI 据此分流；普通音源为 null。 */
-      presetMode: parts.presetMode ?? null,
       /** 该音源的频谱是否可能可用（false = UI 直接画静止占位，不用等 engine 说）。 */
       spectrumPossible: parts.spectrumPossible ?? true
     };
@@ -3485,7 +3563,6 @@ var __dshMusicOnImpl__ = (() => {
       url,
       pageUrl: spec && typeof spec.pageUrl === "string" && spec.pageUrl !== "" ? spec.pageUrl : null,
       platform: spec && typeof spec.platform === "string" && spec.platform !== "" ? spec.platform : null,
-      presetId: spec && spec.presetId || null,
       loopStart: safeLoopSeconds(spec && spec.loopStart),
       loopEnd: safeLoopSeconds(spec && spec.loopEnd)
     });
@@ -3530,36 +3607,6 @@ var __dshMusicOnImpl__ = (() => {
     track.revoke = function revoke() {
     };
     track.cover = typeof input.cover === "string" && input.cover.trim() !== "" ? input.cover.trim() : null;
-    return track;
-  }
-  function createPresetTrack(item, options) {
-    const baseUrl = options && typeof options.baseUrl === "string" ? options.baseUrl : "presets/";
-    const name = item && typeof item.name === "string" && item.name !== "" ? item.name : "音景";
-    const reason = item && typeof item.unavailableReason === "string" ? item.unavailableReason : null;
-    let src = null;
-    if (item && typeof item.url === "string" && item.url !== "") src = item.url;
-    else if (item && typeof item.file === "string" && item.file !== "") src = `${baseUrl}${item.file}`;
-    const track = baseTrack({
-      id: options && options.id || (item && typeof item.id === "string" ? `preset:${item.id}` : nextTrackId("preset")),
-      title: name,
-      artist: "预置音景",
-      kind: KIND_URL_AUDIO,
-      duration: safeSeconds(item && item.duration),
-      seekable: true,
-      source: "preset",
-      url: src,
-      presetId: item && typeof item.id === "string" ? item.id : null,
-      unavailableReason: src === null ? reason || "该音景缺少音频文件" : null,
-      loopStart: safeLoopSeconds(item && item.loopStart),
-      loopEnd: safeLoopSeconds(item && item.loopEnd),
-      presetMode: item && typeof item.mode === "string" ? item.mode : null
-    });
-    track.load = function load() {
-      if (src === null) return Promise.reject(new Error(track.unavailableReason || "音景不可用"));
-      return Promise.resolve({ src, kind: KIND_URL_AUDIO });
-    };
-    track.revoke = function revoke() {
-    };
     return track;
   }
   function createEmbedTrack(spec) {
@@ -3630,21 +3677,6 @@ var __dshMusicOnImpl__ = (() => {
     };
     return track;
   }
-  function resolvePresetRoute(played) {
-    const input = played || {};
-    const mode = typeof input.mode === "string" ? input.mode : "";
-    const spectrum = input.spectrum === true;
-    if (mode === "audio") {
-      const hasSource = typeof input.url === "string" && input.url !== "" || typeof input.file === "string" && input.file !== "" || typeof input.bvid === "string" && input.bvid !== "";
-      if (hasSource === false) {
-        return { route: "external", spectrum: false, reason: "该音景声明为音频，但没有给出可播地址" };
-      }
-      return { route: "audio", spectrum, reason: null };
-    }
-    if (mode === "iframe") return { route: "iframe", spectrum: false, reason: null };
-    if (mode === "external") return { route: "external", spectrum: false, reason: null };
-    return { route: "external", spectrum: false, reason: `未知的音景模式：${mode || "空"}` };
-  }
   function collectFiles(input) {
     if (input === null || input === void 0) return [];
     if (Array.isArray(input)) return input.filter((item) => item && typeof item.name === "string");
@@ -3674,15 +3706,6 @@ var __dshMusicOnImpl__ = (() => {
     }
     return { tracks, skipped, total: files.length };
   }
-  function tracksFromManifest(items, options) {
-    if (Array.isArray(items) === false) return [];
-    const out = [];
-    for (const item of items) {
-      if (!item || typeof item !== "object") continue;
-      out.push(createPresetTrack(item, options));
-    }
-    return out;
-  }
   function describeTrack(track) {
     if (!track) return null;
     return {
@@ -3695,8 +3718,6 @@ var __dshMusicOnImpl__ = (() => {
       embedUrl: track.embedUrl,
       streamUrl: track.streamUrl,
       cover: track.cover,
-      presetId: track.presetId,
-      presetMode: track.presetMode,
       spectrumPossible: track.spectrumPossible,
       loopStart: track.loopStart,
       loopEnd: track.loopEnd,
@@ -3705,7 +3726,7 @@ var __dshMusicOnImpl__ = (() => {
       // 收藏与历史要用的「原始页面地址」。UI 不该自己去猜 track.url 是相对路径还是
       // blob:，那是本模块的知识。回推规则见 trackPageUrl。
       pageUrl: trackPageUrl(track),
-      // 平台曲目的源歌单地址（票据过期后靠它重新解析）。本地文件与预置音景没有。
+      // 平台曲目的源歌单地址（票据过期后靠它重新解析）。本地文件没有。
       sourceUrl: track.sourceUrl ?? null,
       platform: track.platform ?? null
     };
@@ -4276,10 +4297,6 @@ var __dshMusicOnImpl__ = (() => {
       const track = createEmbedTrack({ url, title: options && options.title, artist: options && options.artist });
       return add([track], options);
     }
-    function addManifest(items, options) {
-      const tracks = tracksFromManifest(items, options);
-      return add(tracks, options);
-    }
     function addBilibili(spec, options) {
       const track = createBilibiliTrack(spec || {});
       return add([track], options);
@@ -4287,51 +4304,6 @@ var __dshMusicOnImpl__ = (() => {
     function addPlatform(spec, options) {
       const track = createPlatformTrack(spec || {});
       return add([track], options);
-    }
-    async function addPresetPlay(played, item, options) {
-      const resolved = resolvePresetRoute(played);
-      const meta = item || {};
-      if (resolved.route === "external") {
-        return { position: null, route: "external", reason: resolved.reason };
-      }
-      if (resolved.route === "iframe") {
-        const url = typeof meta.embedUrl === "string" ? meta.embedUrl : "";
-        const track2 = createEmbedTrack({
-          url,
-          title: meta.name,
-          artist: "预置音景",
-          id: typeof meta.id === "string" ? `preset:${meta.id}:embed` : void 0
-        });
-        track2.loopStart = null;
-        track2.loopEnd = null;
-        const position2 = await add([track2], options);
-        return { position: position2, route: "iframe", reason: resolved.reason };
-      }
-      if (typeof played.bvid === "string" && played.bvid !== "") {
-        const track2 = createBilibiliTrack({
-          bvid: played.bvid,
-          cid: played.cid,
-          page: meta.page,
-          title: meta.name,
-          artist: "预置音景",
-          duration: meta.duration,
-          embedUrl: meta.embedUrl
-        });
-        track2.loopStart = typeof played.loopStart === "number" ? played.loopStart : track2.loopStart;
-        track2.loopEnd = typeof played.loopEnd === "number" ? played.loopEnd : track2.loopEnd;
-        const position2 = await add([track2], options);
-        return { position: position2, route: "audio", reason: resolved.reason };
-      }
-      const track = createPresetTrack(
-        {
-          ...meta,
-          url: typeof played.url === "string" ? played.url : meta.url,
-          file: typeof played.file === "string" ? played.file : meta.file
-        },
-        options
-      );
-      const position = await add([track], options);
-      return { position, route: "audio", reason: resolved.reason };
     }
     function remove(position) {
       if (disposed) return -1;
@@ -4628,8 +4600,6 @@ var __dshMusicOnImpl__ = (() => {
       addEmbed,
       addBilibili,
       addPlatform,
-      addPresetPlay,
-      addManifest,
       remove,
       clear,
       loadAt,
@@ -4674,711 +4644,6 @@ var __dshMusicOnImpl__ = (() => {
     }
     if (singleton === null) singleton = createEngine();
     return singleton;
-  }
-
-  // src/client/presets.js
-  var MANIFEST_PATH = "presets/manifest.json";
-  var DEFAULTS = Object.freeze({
-    storageDir: "dsh-music-on/presets-cache",
-    cacheLimitMb: 64,
-    hostCache: "showDirectoryPicker",
-    fetchTimeoutMs: 3e4,
-    verifyOnPlay: false
-  });
-  var SOURCE = Object.freeze({
-    EMBEDDED: "embedded",
-    BILIBILI: "bilibili-embed",
-    PLATFORM: "platform-link"
-  });
-  var STATUS = Object.freeze({
-    READY: "ready",
-    NEEDS_CONFIG: "needs-config",
-    UNAVAILABLE: "unavailable"
-  });
-  var SOURCE_CAPABILITY = Object.freeze({
-    [SOURCE.EMBEDDED]: { plays: true, spectrum: true, offline: true, label: "本地合成" },
-    [SOURCE.BILIBILI]: { plays: true, spectrum: false, offline: false, label: "B站嵌入" },
-    [SOURCE.PLATFORM]: { plays: false, spectrum: false, offline: false, label: "外部跳转" }
-  });
-  var CATEGORIES = Object.freeze([
-    { id: "white-noise", name: "白噪音" },
-    { id: "rain", name: "雨声" },
-    { id: "cafe", name: "咖啡馆" },
-    { id: "beat", name: "鼓点" },
-    { id: "jazz", name: "爵士" },
-    { id: "lofi", name: "Lo-Fi" }
-  ]);
-  async function readSettings(settings) {
-    let raw = {};
-    try {
-      const resolved = typeof settings === "function" ? await settings() : await settings;
-      if (resolved && typeof resolved === "object") raw = resolved;
-    } catch {
-      raw = {};
-    }
-    const pick = (...keys) => {
-      for (const key of keys) {
-        const value = raw?.[key];
-        if (value !== void 0 && value !== null && value !== "") return value;
-      }
-      return void 0;
-    };
-    const limitRaw = pick("cacheLimitMb", "cacheLimit", "maxCacheMb");
-    const limit = Number(limitRaw);
-    const timeoutRaw = Number(pick("fetchTimeoutMs", "downloadTimeoutMs"));
-    return {
-      storageDir: String(pick("storageDir", "cacheDir", "presetsDir") ?? DEFAULTS.storageDir),
-      cacheLimitMb: Number.isFinite(limit) && limit > 0 ? limit : DEFAULTS.cacheLimitMb,
-      hostCache: String(pick("hostCache", "cacheMode") ?? DEFAULTS.hostCache),
-      fetchTimeoutMs: Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : DEFAULTS.fetchTimeoutMs,
-      verifyOnPlay: Boolean(pick("verifyOnPlay") ?? DEFAULTS.verifyOnPlay)
-    };
-  }
-  function createMemoryCache() {
-    const map = /* @__PURE__ */ new Map();
-    return {
-      kind: "memory",
-      async get(key) {
-        return map.get(key) ?? null;
-      },
-      async set(key, blob) {
-        map.set(key, blob);
-      },
-      async delete(key) {
-        map.delete(key);
-      },
-      async list() {
-        return [...map.entries()].map(([key, blob]) => ({ key, sizeBytes: blob?.size ?? 0 }));
-      },
-      async clear() {
-        map.clear();
-      }
-    };
-  }
-  function createIdbCache(dbName = "dsh-music-on-presets", storeName = "files") {
-    if (typeof indexedDB === "undefined") return null;
-    let dbPromise = null;
-    const open = () => {
-      if (!dbPromise) {
-        dbPromise = new Promise((resolve, reject) => {
-          const req = indexedDB.open(dbName, 1);
-          req.onupgradeneeded = () => {
-            const db = req.result;
-            if (!db.objectStoreNames.contains(storeName)) db.createObjectStore(storeName);
-          };
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      }
-      return dbPromise;
-    };
-    const tx = async (mode, fn) => {
-      const db = await open();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction(storeName, mode);
-        const store = transaction.objectStore(storeName);
-        let result;
-        try {
-          result = fn(store);
-        } catch (error) {
-          reject(error);
-          return;
-        }
-        transaction.oncomplete = () => resolve(result?.__req ? result.__req.result : result);
-        transaction.onerror = () => reject(transaction.error);
-        transaction.onabort = () => reject(transaction.error);
-      });
-    };
-    return {
-      kind: "indexeddb",
-      async get(key) {
-        const blob = await tx("readonly", (store) => ({ __req: store.get(key) }));
-        return blob ?? null;
-      },
-      async set(key, blob) {
-        await tx("readwrite", (store) => {
-          store.put(blob, key);
-          return null;
-        });
-      },
-      async delete(key) {
-        await tx("readwrite", (store) => {
-          store.delete(key);
-          return null;
-        });
-      },
-      async list() {
-        const entries = await tx("readonly", (store) => ({ __req: store.getAllKeys() }));
-        const keys = entries ?? [];
-        const out = [];
-        for (const key of keys) {
-          const blob = await this.get(key);
-          out.push({ key, sizeBytes: blob?.size ?? 0 });
-        }
-        return out;
-      },
-      async clear() {
-        await tx("readwrite", (store) => {
-          store.clear();
-          return null;
-        });
-      }
-    };
-  }
-  function createCache(opts = {}) {
-    const store = opts.cacheStore ?? createIdbCache(`dsh-music-on-presets:${opts.storageDir ?? "default"}`) ?? createMemoryCache();
-    return {
-      kind: store.kind ?? "host",
-      storageDir: opts.storageDir ?? DEFAULTS.storageDir,
-      get: (key) => store.get(key),
-      set: (key, blob) => store.set(key, blob),
-      delete: (key) => store.delete(key),
-      list: () => store.list(),
-      clear: () => store.clear()
-    };
-  }
-  var isBvId = (value) => typeof value === "string" && /^BV[0-9A-Za-z]{10}$/.test(value.trim());
-  function parseManifest(manifest) {
-    if (!manifest || typeof manifest !== "object" || !Array.isArray(manifest.items)) {
-      throw new Error("preset manifest 结构不合法：缺少 items 数组");
-    }
-    const issues = [];
-    const seen = /* @__PURE__ */ new Set();
-    const items = [];
-    for (const raw of manifest.items) {
-      if (!raw || typeof raw !== "object") {
-        issues.push("忽略非对象条目");
-        continue;
-      }
-      const id = String(raw.id ?? "").trim();
-      if (!id) {
-        issues.push("忽略缺少 id 的条目");
-        continue;
-      }
-      if (seen.has(id)) {
-        issues.push(`条目 id 重复：${id}`);
-        continue;
-      }
-      seen.add(id);
-      const source = [SOURCE.EMBEDDED, SOURCE.BILIBILI, SOURCE.PLATFORM].includes(raw.source) ? raw.source : SOURCE.EMBEDDED;
-      let status = raw.status;
-      if (![STATUS.READY, STATUS.NEEDS_CONFIG, STATUS.UNAVAILABLE].includes(status)) {
-        status = STATUS.NEEDS_CONFIG;
-      }
-      let playable = false;
-      let reason = raw.unavailableReason ?? null;
-      if (source === SOURCE.EMBEDDED) {
-        const hasFile = typeof raw.url === "string" && raw.url.length > 0;
-        const hasHash = typeof raw.sha256 === "string" && /^[0-9a-f]{64}$/.test(raw.sha256);
-        const hasSize = Number.isFinite(Number(raw.sizeBytes)) && Number(raw.sizeBytes) > 0;
-        playable = hasFile && hasHash && hasSize;
-        if (!playable) {
-          if (status === STATUS.READY) {
-            issues.push(`${id}: status=ready 但缺少 url/sha256/sizeBytes，降级为 needs-config`);
-            status = STATUS.NEEDS_CONFIG;
-          }
-          reason ??= hasFile ? "清单缺少 sha256 或 sizeBytes，无法校验" : "清单未提供音频文件地址";
-        }
-      } else if (source === SOURCE.BILIBILI) {
-        playable = isBvId(raw.bvid);
-        if (!playable) {
-          if (status === STATUS.READY) {
-            issues.push(`${id}: status=ready 但没有合法 bvid，降级为 needs-config`);
-            status = STATUS.NEEDS_CONFIG;
-          }
-          reason ??= "等待开发者填入公开视频 BV 号";
-        }
-      } else {
-        playable = typeof raw.pageUrl === "string" && /^https?:\/\//.test(raw.pageUrl);
-        if (!playable) {
-          if (status === STATUS.READY) {
-            issues.push(`${id}: status=ready 但没有 pageUrl，降级为 needs-config`);
-            status = STATUS.NEEDS_CONFIG;
-          }
-          reason ??= "等待开发者填入公开歌单页 URL";
-        }
-      }
-      const capability = SOURCE_CAPABILITY[source];
-      items.push({
-        ...raw,
-        id,
-        source,
-        status,
-        playable,
-        spectrumAvailable: playable ? raw.spectrumAvailable === true : false,
-        unavailableReason: playable ? null : reason,
-        label: capability.label
-      });
-    }
-    return {
-      version: Number(manifest.version) || 1,
-      loopCrossfadeSec: Number(manifest.loopCrossfadeSec) || 0.25,
-      items,
-      issues
-    };
-  }
-  function resolveUrl(path, baseUrl) {
-    const U = globalThis.URL;
-    if (typeof U !== "function") return String(path);
-    const origin = globalThis.location?.href ?? BASE_ORIGIN;
-    try {
-      return new U(String(path), new U(baseUrl, origin)).href;
-    } catch {
-      return String(path);
-    }
-  }
-  var BASE_ORIGIN = "http://localhost/";
-  function defaultFetch() {
-    return typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null;
-  }
-  async function loadManifest({ baseUrl = "./", fetchImpl: fetchImpl2, manifestPath = MANIFEST_PATH } = {}) {
-    const doFetch = fetchImpl2 ?? defaultFetch();
-    if (!doFetch) throw new Error("dsh-music-on: 当前环境没有 fetch，无法加载预置音景");
-    const url = resolveUrl(manifestPath, baseUrl);
-    const response = await doFetch(url, { cache: "no-cache" });
-    if (!response.ok) throw new Error(`清单加载失败：HTTP ${response.status} ${url}`);
-    return parseManifest(await response.json());
-  }
-  function bytesToHex(buffer) {
-    const view = new Uint8Array(buffer);
-    let out = "";
-    for (let i = 0; i < view.length; i++) out += view[i].toString(16).padStart(2, "0");
-    return out;
-  }
-  async function sha256Hex(buffer) {
-    const subtle = globalThis.crypto?.subtle;
-    if (!subtle) throw new Error("当前不是安全上下文（需要 https 或 localhost），crypto.subtle 不可用");
-    const digest = await subtle.digest("SHA-256", buffer);
-    return bytesToHex(digest);
-  }
-  async function fetchWithTimeout(doFetch, url, timeoutMs) {
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return fetchImpl(url);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      return await fetchImpl(url, { signal: controller.signal });
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  async function ensureCached(item, { cache, baseUrl = "./", fetchImpl: fetchImpl2, fetchTimeoutMs = DEFAULTS.fetchTimeoutMs, retries = 1 } = {}) {
-    if (item.source !== SOURCE.EMBEDDED) throw new Error(`${item.id}: 不是 embedded 条目，不能下载缓存`);
-    if (!item.playable) throw new Error(`${item.id}: 未就绪（${item.unavailableReason ?? "清单未提供可用音频"}）`);
-    const doFetch = fetchImpl2 ?? defaultFetch();
-    if (!doFetch) throw new Error(`${item.id}: 当前环境没有 fetch`);
-    const cacheKey = `preset:${item.id}:${item.sha256}`;
-    const cached = await cache.get(cacheKey);
-    if (cached) return { blob: cached, fromCache: true, attempts: 0 };
-    const url = resolveUrl(item.url, baseUrl);
-    let lastError = null;
-    for (let attempt = 0; attempt <= retries; attempt += 1) {
-      let response;
-      try {
-        response = await fetchWithTimeout(doFetch, url, fetchTimeoutMs);
-      } catch (error) {
-        lastError = new Error(`${item.id}: 下载失败（${error?.message ?? error}）`);
-        continue;
-      }
-      if (!response.ok) {
-        lastError = new Error(`${item.id}: 下载失败 HTTP ${response.status}`);
-        continue;
-      }
-      const buffer = await response.arrayBuffer();
-      if (buffer.byteLength !== item.sizeBytes) {
-        lastError = new Error(`${item.id}: 体积校验失败（期望 ${item.sizeBytes}，实际 ${buffer.byteLength}）`);
-        continue;
-      }
-      let digest;
-      try {
-        digest = await sha256Hex(buffer);
-      } catch (error) {
-        throw new Error(`${item.id}: 无法校验 sha256（${error?.message ?? error}）`);
-      }
-      if (digest !== item.sha256) {
-        lastError = new Error(`${item.id}: sha256 校验失败（期望 ${item.sha256.slice(0, 12)}…，实际 ${digest.slice(0, 12)}…）`);
-        continue;
-      }
-      const blob = new Blob([buffer], { type: "audio/wav" });
-      await cache.set(cacheKey, blob);
-      return { blob, fromCache: false, attempts: attempt + 1 };
-    }
-    await cache.delete(cacheKey).catch(() => {
-    });
-    throw lastError ?? new Error(`${item.id}: 下载失败`);
-  }
-  async function enforceCacheLimit(cache, limitMb, { protectKeys = [] } = {}) {
-    if (!(limitMb > 0)) return { removed: 0, sizeBytes: 0 };
-    const entries = await cache.list();
-    const limitBytes = limitMb * 1024 * 1024;
-    let total = entries.reduce((sum, entry) => sum + (entry.sizeBytes ?? 0), 0);
-    const protect = new Set(protectKeys);
-    let removed = 0;
-    for (const entry of entries) {
-      if (total <= limitBytes) break;
-      if (protect.has(entry.key)) continue;
-      await cache.delete(entry.key);
-      total -= entry.sizeBytes ?? 0;
-      removed += 1;
-    }
-    return { removed, sizeBytes: total };
-  }
-  function createEngine2({ audioContextFactory, manifest, onStateChange } = {}) {
-    const ctxFactory = audioContextFactory ?? (() => {
-      const Ctor = globalThis.AudioContext ?? globalThis.webkitAudioContext;
-      if (!Ctor) throw new Error("当前环境没有 AudioContext，无法播放本地音景");
-      return new Ctor();
-    });
-    let ctx = null;
-    let gain = null;
-    let analyser = null;
-    let sourceNode = null;
-    let currentId = null;
-    let loopCache = /* @__PURE__ */ new Map();
-    let volume = 0.8;
-    const emit3 = (state) => {
-      try {
-        onStateChange?.(state);
-      } catch {
-      }
-    };
-    const ensureContext = async () => {
-      if (!ctx) {
-        ctx = ctxFactory();
-        gain = ctx.createGain();
-        gain.gain.value = volume;
-        analyser = ctx.createAnalyser();
-        analyser.fftSize = 2048;
-        analyser.smoothingTimeConstant = 0.8;
-        gain.connect(analyser);
-        analyser.connect(ctx.destination);
-      }
-      if (ctx.state === "suspended") await ctx.resume();
-      return ctx;
-    };
-    const stopEmbedded = () => {
-      if (!sourceNode) return;
-      try {
-        sourceNode.onended = null;
-        sourceNode.stop();
-        sourceNode.disconnect();
-      } catch {
-      }
-      sourceNode = null;
-    };
-    const decode = async (item, blob) => {
-      const key = `${item.id}:${item.sha256}`;
-      const cached = loopCache.get(key);
-      if (cached) return cached;
-      const buffer = await blob.arrayBuffer();
-      const decoded = await (await ensureContext()).decodeAudioData(buffer);
-      loopCache.set(key, decoded);
-      return decoded;
-    };
-    const playEmbedded = async (item, { blob } = {}) => {
-      if (!blob) throw new Error(`${item.id}: 缺少已校验的音频数据`);
-      await ensureContext();
-      const audioBuffer = await decode(item, blob);
-      const dur = audioBuffer.duration;
-      let loopStart = Number.isFinite(item.loopStart) ? item.loopStart : 0;
-      let loopEnd = Number.isFinite(item.loopEnd) ? item.loopEnd : dur;
-      loopStart = Math.max(0, Math.min(loopStart, dur - 0.05));
-      loopEnd = Math.max(loopStart + 0.05, Math.min(loopEnd, dur));
-      stopEmbedded();
-      const node = ctx.createBufferSource();
-      node.buffer = audioBuffer;
-      node.loop = true;
-      node.loopStart = loopStart;
-      node.loopEnd = loopEnd;
-      node.connect(gain);
-      node.start(0, loopStart);
-      sourceNode = node;
-      currentId = item.id;
-      emit3({ id: item.id, source: SOURCE.EMBEDDED, playing: true, spectrum: true, loopStart, loopEnd, duration: dur });
-      return { playing: true, spectrum: true };
-    };
-    const stop = () => {
-      stopEmbedded();
-      const previous = currentId;
-      currentId = null;
-      emit3({ id: previous, playing: false, source: null, spectrum: false });
-    };
-    const setVolume = (value) => {
-      const v = Math.max(0, Math.min(1, Number(value)));
-      if (!Number.isFinite(v)) return volume;
-      volume = v;
-      if (gain) gain.gain.setTargetAtTime(v, ctx.currentTime, 0.02);
-      return volume;
-    };
-    const readSpectrum = () => {
-      if (!analyser || !sourceNode) return null;
-      const bins = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(bins);
-      return bins;
-    };
-    return {
-      playEmbedded,
-      stop,
-      setVolume,
-      readSpectrum,
-      get currentId() {
-        return currentId;
-      },
-      get context() {
-        return ctx;
-      },
-      get analyser() {
-        return analyser;
-      },
-      get hasSpectrum() {
-        return Boolean(analyser && sourceNode);
-      },
-      async close() {
-        stop();
-        loopCache = /* @__PURE__ */ new Map();
-        if (ctx && typeof ctx.close === "function") await ctx.close().catch(() => {
-        });
-        ctx = null;
-        gain = null;
-        analyser = null;
-      }
-    };
-  }
-  function buildBilibiliEmbedUrl(item, { autoplay = 1, danmaku = 0, highQuality = 1 } = {}) {
-    if (item.source !== SOURCE.BILIBILI) throw new Error(`${item.id}: 不是 bilibili-embed 条目`);
-    if (!isBvId(item.bvid)) throw new Error(`${item.id}: 未配置合法 bvid（等待开发者填入公开视频 BV 号）`);
-    const params = new URLSearchParams({
-      bvid: item.bvid.trim(),
-      p: "1",
-      autoplay: String(autoplay),
-      danmaku: String(danmaku),
-      // B站参数名就是 danmaku，不是 dm
-      high_quality: String(highQuality)
-    });
-    return `https://player.bilibili.com/player.html?${params.toString()}`;
-  }
-  function resolvePlatformUrl(item) {
-    if (item.source !== SOURCE.PLATFORM) throw new Error(`${item.id}: 不是 platform-link 条目`);
-    if (!item.playable) throw new Error(`${item.id}: ${item.unavailableReason ?? "未配置平台链接"}`);
-    return item.pageUrl;
-  }
-  async function createPresets(options = {}) {
-    const {
-      settings,
-      cacheStore,
-      baseUrl = "./",
-      fetchImpl: fetchImpl2,
-      audioContextFactory,
-      manifest: providedManifest,
-      onStateChange
-    } = options;
-    const config = await readSettings(settings);
-    const cache = createCache({ cacheStore, storageDir: config.storageDir });
-    const manifest = providedManifest && providedManifest.items ? providedManifest : await loadManifest({ baseUrl, fetchImpl: fetchImpl2 });
-    const looksParsed = Array.isArray(manifest.items) && manifest.items.length > 0 && manifest.items.every((item) => item && typeof item.playable === "boolean" && typeof item.label === "string");
-    const parsed = looksParsed ? manifest : parseManifest(manifest);
-    const byId = new Map(parsed.items.map((item) => [item.id, item]));
-    const listeners2 = /* @__PURE__ */ new Set();
-    const statusMap = /* @__PURE__ */ new Map();
-    const engine = createEngine2({
-      audioContextFactory,
-      manifest: parsed,
-      onStateChange: (state) => {
-        publish({ type: "playback", ...state });
-        try {
-          onStateChange?.(state);
-        } catch {
-        }
-      }
-    });
-    function publish(event) {
-      for (const fn of listeners2) {
-        try {
-          fn(event);
-        } catch {
-        }
-      }
-    }
-    const get = (id) => byId.get(id) ?? null;
-    async function prepare(id) {
-      const item = get(id);
-      if (!item) throw new Error(`未知预置：${id}`);
-      if (item.source !== SOURCE.EMBEDDED) return { skipped: true, item };
-      if (!item.playable) {
-        const error = new Error(`${item.id}: ${item.unavailableReason ?? "未就绪"}`);
-        statusMap.set(item.id, { status: STATUS.UNAVAILABLE, reason: error.message });
-        publish({ type: "error", id: item.id, error });
-        throw error;
-      }
-      try {
-        const result = await ensureCached(item, {
-          cache,
-          baseUrl,
-          fetchImpl: fetchImpl2,
-          fetchTimeoutMs: config.fetchTimeoutMs
-        });
-        await enforceCacheLimit(cache, config.cacheLimitMb, { protectKeys: [`preset:${item.id}:${item.sha256}`] });
-        statusMap.set(item.id, { status: STATUS.READY, reason: null, fromCache: result.fromCache });
-        publish({ type: "cached", id: item.id, fromCache: result.fromCache });
-        return { ...result, item };
-      } catch (error) {
-        statusMap.set(item.id, { status: STATUS.UNAVAILABLE, reason: error.message });
-        publish({ type: "error", id: item.id, error });
-        throw error;
-      }
-    }
-    async function play(id) {
-      const item = get(id);
-      if (!item) {
-        const error = new Error(`未知预置：${id}`);
-        publish({ type: "error", id, error });
-        throw error;
-      }
-      try {
-        if (item.source === SOURCE.EMBEDDED) {
-          const { blob } = await prepare(id);
-          const state = await engine.playEmbedded(item, { blob });
-          return { mode: "audio", ...state };
-        }
-        if (item.source === SOURCE.BILIBILI) {
-          const embedUrl = buildBilibiliEmbedUrl(item);
-          publish({ type: "embed", id, embedUrl, spectrum: false });
-          return { mode: "iframe", embedUrl, spectrum: false, note: "B站嵌入播放，音频不进入 AudioContext，频谱不可用" };
-        }
-        const url = resolvePlatformUrl(item);
-        publish({ type: "external", id, url });
-        return { mode: "external", url, spectrum: false, note: "外部平台跳转，插件内不播放" };
-      } catch (error) {
-        statusMap.set(item.id, { status: error.status ?? STATUS.UNAVAILABLE, reason: error.message });
-        publish({ type: "error", id, error });
-        throw error;
-      }
-    }
-    async function prepareAll() {
-      const targets = parsed.items.filter((item) => item.source === SOURCE.EMBEDDED && item.playable);
-      const results = [];
-      for (const item of targets) {
-        try {
-          await prepare(item.id);
-          results.push({ id: item.id, ok: true });
-        } catch (error) {
-          results.push({ id: item.id, ok: false, error: error.message });
-        }
-      }
-      return results;
-    }
-    function categories() {
-      return CATEGORIES.map((category) => {
-        const items = parsed.items.filter((item) => item.category === category.id);
-        return {
-          ...category,
-          items,
-          counts: {
-            ready: items.filter((item) => item.playable).length,
-            needsConfig: items.filter((item) => item.status === STATUS.NEEDS_CONFIG).length,
-            unavailable: items.filter((item) => item.status === STATUS.UNAVAILABLE).length
-          }
-        };
-      }).filter((category) => category.items.length > 0);
-    }
-    function list() {
-      return parsed.items.map((item) => ({
-        ...item,
-        runtime: statusMap.get(item.id) ?? null
-      }));
-    }
-    function unavailableReport() {
-      return parsed.items.filter((item) => !item.playable).map((item) => ({
-        id: item.id,
-        name: item.name,
-        source: item.source,
-        status: item.status,
-        spectrumAvailable: false,
-        reason: statusMap.get(item.id)?.reason ?? item.unavailableReason ?? "未配置",
-        hint: item.source === SOURCE.BILIBILI ? '在 manifest.json 填入 bvid 并把 status 改为 "ready"' : item.source === SOURCE.PLATFORM ? '在 manifest.json 填入 pageUrl 并把 status 改为 "ready"' : "该条目没有音频产物，需要补生成脚本配方或移除条目"
-      }));
-    }
-    return {
-      config,
-      cache,
-      engine,
-      manifest: parsed,
-      issues: parsed.issues ?? [],
-      categories,
-      list,
-      get,
-      prepare,
-      prepareAll,
-      play,
-      stop: () => engine.stop(),
-      setVolume: (v) => engine.setVolume(v),
-      readSpectrum: () => engine.readSpectrum(),
-      unavailableReport,
-      buildBilibiliEmbedUrl: (id) => buildBilibiliEmbedUrl(get(id)),
-      resolvePlatformUrl: (id) => resolvePlatformUrl(get(id)),
-      onChange(fn) {
-        listeners2.add(fn);
-        return () => listeners2.delete(fn);
-      },
-      async cacheStats() {
-        const entries = await cache.list();
-        const sizeBytes = entries.reduce((sum, entry) => sum + (entry.sizeBytes ?? 0), 0);
-        return {
-          backend: cache.kind,
-          storageDir: cache.storageDir,
-          limitMb: config.cacheLimitMb,
-          entries: entries.length,
-          sizeBytes,
-          sizeMb: sizeBytes / (1024 * 1024)
-        };
-      }
-    };
-  }
-
-  // src/client/presets-boot.js
-  var PRESETS_BASE = "/api/dsh-music-on/presets/";
-  var SLOT = "__dsh_music_on_presets__";
-  async function ensurePresets(deps = {}) {
-    if (typeof window === "undefined") return null;
-    if (window[SLOT]) return window[SLOT];
-    if (window[`${SLOT}promise`]) return window[`${SLOT}promise`];
-    const promise = (async () => {
-      try {
-        const settings = deps.settings || (deps.store ? deps.store.get() : void 0);
-        const controller = await createPresets({
-          settings,
-          // 末尾斜杠是 URL 语义的一部分：少了它 'presets/manifest.json'
-          // 会把最后一段当文件名替换掉，路径直接错位。
-          baseUrl: PRESETS_BASE
-        });
-        window[SLOT] = controller;
-        return controller;
-      } catch (error) {
-        if (typeof console !== "undefined" && console.warn) {
-          console.warn(`[${PLUGIN_ID}] 预置音景初始化失败：`, error);
-        }
-        return null;
-      } finally {
-        delete window[`${SLOT}promise`];
-      }
-    })();
-    window[`${SLOT}promise`] = promise;
-    return promise;
-  }
-  function getPresetsSync() {
-    if (typeof window === "undefined") return null;
-    return window[SLOT] || null;
-  }
-  function disposePresets() {
-    if (typeof window === "undefined") return;
-    const controller = window[SLOT];
-    if (!controller) return;
-    try {
-      if (typeof controller.stop === "function") controller.stop();
-      if (controller.cache && typeof controller.cache.close === "function") controller.cache.close();
-    } catch (error) {
-      void error;
-    }
-    delete window[SLOT];
   }
 
   // src/client/parser.js
@@ -6067,7 +5332,7 @@ var __dshMusicOnImpl__ = (() => {
     if (platform.startsWith("qq")) return "QQ音乐链接会解析成可播放曲目，需要会员的曲目只能跳原平台";
     return "YouTube 需要额外解码服务，这里只做跳转";
   }
-  function buildBilibiliEmbedUrl2(ids, page) {
+  function buildBilibiliEmbedUrl(ids, page) {
     const spec = ids || {};
     if (typeof spec.bvid === "string" && BV_RE.test(spec.bvid)) {
       const p = Number.isInteger(page) && page > 0 ? page : 1;
@@ -6078,8 +5343,8 @@ var __dshMusicOnImpl__ = (() => {
     }
     return null;
   }
-  async function fetchJson(url, { fetchImpl: fetchImpl2, signal } = {}) {
-    const doFetch = fetchImpl2 || (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
+  async function fetchJson(url, { fetchImpl, signal } = {}) {
+    const doFetch = fetchImpl || (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
     if (!doFetch) throw new Error("当前环境没有 fetch");
     const response = await doFetch(url, {
       method: "GET",
@@ -6098,10 +5363,10 @@ var __dshMusicOnImpl__ = (() => {
     }
     return await response.json();
   }
-  async function resolveBilibili(url, { fetchImpl: fetchImpl2 } = {}) {
+  async function resolveBilibili(url, { fetchImpl } = {}) {
     const target = `${RESOLVE_PATH2}?url=${encodeURIComponent(url)}`;
     try {
-      const body = await fetchJson(target, { fetchImpl: fetchImpl2 });
+      const body = await fetchJson(target, { fetchImpl });
       if (!body || body.ok === false) {
         throw new Error(body && body.message || body && body.code || "解析服务返回失败");
       }
@@ -6131,11 +5396,11 @@ var __dshMusicOnImpl__ = (() => {
     if (platform.startsWith("bilibili")) return "bilibili";
     return null;
   }
-  async function resolvePlatform(url, { fetchImpl: fetchImpl2, limit } = {}) {
+  async function resolvePlatform(url, { fetchImpl, limit } = {}) {
     const limitPart = Number.isFinite(Number(limit)) && Number(limit) > 0 ? `&limit=${Math.trunc(Number(limit))}` : "";
     const target = `${RESOLVE_PATH2}?url=${encodeURIComponent(url)}${limitPart}`;
     try {
-      const body = await fetchJson(target, { fetchImpl: fetchImpl2 });
+      const body = await fetchJson(target, { fetchImpl });
       if (!body || body.ok === false) {
         throw new Error(body && body.message || body && body.code || "解析服务返回失败");
       }
@@ -6182,7 +5447,7 @@ var __dshMusicOnImpl__ = (() => {
         }
         if (verdict.route === "bilibili") {
           const resolved = await resolveBilibili(url, deps);
-          const embedUrl = buildBilibiliEmbedUrl2(verdict.ids, verdict.ids && verdict.ids.page);
+          const embedUrl = buildBilibiliEmbedUrl(verdict.ids, verdict.ids && verdict.ids.page);
           const cid = resolved.ok ? toSafeCid(resolved.cid) : null;
           const title = resolved.title || (verdict.ids && verdict.ids.bvid ? `Bilibili ${verdict.ids.bvid}` : url);
           const cover = resolved.ok && typeof resolved.cover === "string" && resolved.cover ? resolved.cover : null;
@@ -6404,7 +5669,6 @@ var __dshMusicOnImpl__ = (() => {
     }
     if (typeof raw.bvid === "string" && raw.bvid !== "") record.bvid = raw.bvid;
     if (typeof raw.embedUrl === "string" && raw.embedUrl !== "") record.embedUrl = raw.embedUrl;
-    if (typeof raw.presetId === "string" && raw.presetId !== "") record.presetId = raw.presetId;
     if (typeof raw.cover === "string" && /^https:\/\//i.test(raw.cover)) record.cover = raw.cover;
     if (!record.url && !record.pageUrl && !record.bvid && !record.embedUrl) {
       record.missing = true;
@@ -6502,52 +5766,54 @@ var __dshMusicOnImpl__ = (() => {
   }
   function createShellDock(props) {
     const { engine, store, t } = props;
-    const { useState: useState5, useEffect: useEffect6, useRef: useRef4, useCallback: useCallback4, useMemo: useMemo4, createElement: h6 } = props.React;
+    const { useState: useState4, useEffect: useEffect5, useRef: useRef3, useCallback: useCallback3, useMemo: useMemo3, createElement: h5 } = props.React;
     return function ShellDock() {
       const settings = useStoreSnapshot(props.React, store);
-      const [collapsed, setCollapsed] = useState5(() => {
+      const [collapsed, setCollapsed] = useState4(() => {
         const manual = readFlagRaw(COLLAPSE_KEY);
         if (manual !== null) return manual;
         return settings ? settings.startCollapsed !== false : true;
       });
-      const [hidden, setHidden] = useState5(() => readFlag(HIDDEN_KEY, false));
-      const [state, setState] = useState5(() => normalizeState(engine && engine.getState ? engine.getState() : {}));
-      const [queue, setQueue] = useState5(() => engine && engine.getQueue ? engine.getQueue() : []);
-      const [draft, setDraft] = useState5("");
-      const [busy, setBusy] = useState5(false);
-      const [note, setNote] = useState5(null);
-      const [dragging, setDragging] = useState5(false);
-      const [soundscapes, setSoundscapes] = useState5(() => []);
-      const [soundscapeOpen, setSoundscapeOpen] = useState5(false);
-      const [favOn, setFavOn] = useState5(() => {
+      const [hidden, setHidden] = useState4(() => readFlag(HIDDEN_KEY, false));
+      const [state, setState] = useState4(() => normalizeState(engine && engine.getState ? engine.getState() : {}));
+      const [queue, setQueue] = useState4(() => engine && engine.getQueue ? engine.getQueue() : []);
+      const [draft, setDraft] = useState4("");
+      const [busy, setBusy] = useState4(false);
+      const [note, setNote] = useState4(null);
+      const [dragging, setDragging] = useState4(false);
+      const [favOn, setFavOn] = useState4(() => {
         const url = currentPageUrl(engine);
         return url === "" ? false : isFavorite(url);
       });
-      const [peekSpectrum, setPeekSpectrum] = useState5(false);
-      useEffect6(() => {
+      const [peekSpectrum, setPeekSpectrum] = useState4(false);
+      useEffect5(() => {
         if (!peekSpectrum) return void 0;
         const timer = window.setTimeout(() => setPeekSpectrum(false), 3e3);
         return () => window.clearTimeout(timer);
       }, [peekSpectrum]);
-      const dragDepth = useRef4(0);
-      const knobRef = useRef4(null);
-      const knobDragRef = useRef4(null);
-      const knobListenersRef = useRef4(null);
-      const onKnobUpRef = useRef4(null);
-      const volumeRef = useRef4(typeof settings.volume === "number" ? settings.volume : 0.8);
-      const knobMovedRef = useRef4(false);
-      const lastLoudRef = useRef4(0.8);
-      const [knobValue, setKnobValue] = useState5(volumeRef.current);
-      const [knobDragging, setKnobDragging] = useState5(false);
+      const dragDepth = useRef3(0);
+      const knobRef = useRef3(null);
+      const knobDragRef = useRef3(null);
+      const knobListenersRef = useRef3(null);
+      const onKnobUpRef = useRef3(null);
+      const volumeRef = useRef3(typeof settings.volume === "number" ? settings.volume : 0.8);
+      const knobMovedRef = useRef3(false);
+      const lastLoudRef = useRef3(0.8);
+      const [knobValue, setKnobValue] = useState4(volumeRef.current);
+      const [knobDragging, setKnobDragging] = useState4(false);
       const spectrumCfg = {
-        style: settings.spectrumStyle || "bars",
+        style: settings.spectrumStyle || "dots",
         fps: settings.spectrumFps || 60,
         bars: settings.spectrumBars || 48,
         gain: typeof settings.spectrumGain === "number" ? settings.spectrumGain : 1,
         glow: settings.spectrumGlow || "soft",
-        height: settings.spectrumHeight || 64
+        height: settings.spectrumHeight || 64,
+        // 宽度百分比交给外壳算像素：Spectrum 只认自己容器的真实宽度。
+        span: Number.isFinite(Number(settings.spectrumSpan)) ? Number(settings.spectrumSpan) : 80
       };
       const spectrumStyle = spectrumCfg.style;
+      const spectrumSpan = Math.min(100, Math.max(20, spectrumCfg.span));
+      const theme = settings.theme || "whale";
       const spectrumPlacement = settings.spectrumPlacement || "bar";
       const spectrumDepth = settings.spectrumDepth === "back" ? "back" : "front";
       const spectrumPeek = spectrumDepth === "back" && peekSpectrum;
@@ -6558,7 +5824,7 @@ var __dshMusicOnImpl__ = (() => {
       const autoLinks = autoOn && (autoplayTarget === "both" || autoplayTarget === "link");
       const autoFiles = autoOn && (autoplayTarget === "both" || autoplayTarget === "file");
       const trackLimit = Number.isFinite(Number(settings.platformTrackLimit)) ? Number(settings.platformTrackLimit) : 60;
-      useEffect6(() => {
+      useEffect5(() => {
         if (!engine || typeof engine.onStateChange !== "function") return void 0;
         const offTime = typeof engine.onTimeUpdate === "function" ? engine.onTimeUpdate((tick) => {
           const time = tick && typeof tick === "object" ? tick.currentTime : tick;
@@ -6593,37 +5859,37 @@ var __dshMusicOnImpl__ = (() => {
           if (offError) offError();
         };
       }, []);
-      useEffect6(() => {
+      useEffect5(() => {
         writeFlag(COLLAPSE_KEY, collapsed);
       }, [collapsed]);
-      useEffect6(() => {
+      useEffect5(() => {
         writeFlag(HIDDEN_KEY, hidden);
       }, [hidden]);
-      const [pos, setPos] = useState5(() => {
+      const [pos, setPos] = useState4(() => {
         const sx = settings.dockX;
         const sy = settings.dockY;
         return typeof sx === "number" && typeof sy === "number" ? { x: sx, y: sy } : null;
       });
-      const [holding, setHolding] = useState5(() => {
+      const [holding, setHolding] = useState4(() => {
         const sx = settings.dockX;
         const sy = settings.dockY;
         return typeof sx === "number" && typeof sy === "number";
       });
-      const dragRef = useRef4(null);
-      const posRef = useRef4(pos);
+      const dragRef = useRef3(null);
+      const posRef = useRef3(pos);
       posRef.current = pos;
-      const liveRef = useRef4(null);
-      const holdingRef = useRef4(false);
-      const stackRef = useRef4(null);
-      const collapsedHandleRef = useRef4(null);
-      const stageHandleRef = useRef4(null);
-      const panelRef = useRef4(null);
-      const commitPos = useCallback4((next) => {
+      const liveRef = useRef3(null);
+      const holdingRef = useRef3(false);
+      const stackRef = useRef3(null);
+      const collapsedHandleRef = useRef3(null);
+      const stageHandleRef = useRef3(null);
+      const panelRef = useRef3(null);
+      const commitPos = useCallback3((next) => {
         if (!store || typeof store.patch !== "function") return;
         store.patch("dockX", next ? next.x : null);
         store.patch("dockY", next ? next.y : null);
       }, [store]);
-      const clampToViewport = useCallback4((x, y) => {
+      const clampToViewport = useCallback3((x, y) => {
         const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
         const vh = typeof window !== "undefined" ? window.innerHeight : 800;
         const el = panelRef.current || stackRef.current;
@@ -6637,7 +5903,7 @@ var __dshMusicOnImpl__ = (() => {
           y: Math.round(Math.min(Math.max(0, y), maxY))
         };
       }, []);
-      const applyPos = useCallback4((next) => {
+      const applyPos = useCallback3((next) => {
         const point = { x: next.x, y: next.y };
         liveRef.current = point;
         const wasHolding = holdingRef.current;
@@ -6651,9 +5917,9 @@ var __dshMusicOnImpl__ = (() => {
         }
         if (!wasHolding) setHolding(true);
       }, []);
-      const dragListenersRef = useRef4(null);
-      const suppressClickRef = useRef4(false);
-      const detachDragListeners = useCallback4(() => {
+      const dragListenersRef = useRef3(null);
+      const suppressClickRef = useRef3(false);
+      const detachDragListeners = useCallback3(() => {
         const off = dragListenersRef.current;
         dragListenersRef.current = null;
         if (!off || typeof window === "undefined") return;
@@ -6661,7 +5927,7 @@ var __dshMusicOnImpl__ = (() => {
         window.removeEventListener("pointerup", off.up);
         window.removeEventListener("pointercancel", off.up);
       }, []);
-      const stepDrag = useCallback4((event) => {
+      const stepDrag = useCallback3((event) => {
         const drag = dragRef.current;
         if (!drag || drag.pointerId !== event.pointerId) return;
         const next = clampToViewport(event.clientX - drag.grabX, event.clientY - drag.grabY);
@@ -6676,7 +5942,7 @@ var __dshMusicOnImpl__ = (() => {
         drag.last = next;
         applyPos(next);
       }, [applyPos, clampToViewport]);
-      const finishDrag = useCallback4((event) => {
+      const finishDrag = useCallback3((event) => {
         const drag = dragRef.current;
         if (!drag || drag.pointerId !== event.pointerId) return;
         dragRef.current = null;
@@ -6699,7 +5965,7 @@ var __dshMusicOnImpl__ = (() => {
           setHolding(false);
         }
       }, [commitPos, detachDragListeners]);
-      const onDragStart = useCallback4((event) => {
+      const onDragStart = useCallback3((event) => {
         if (event.button !== 0) return;
         const panel2 = stackRef.current || panelRef.current || event.currentTarget;
         if (!panel2 || typeof panel2.getBoundingClientRect !== "function") return;
@@ -6724,20 +5990,20 @@ var __dshMusicOnImpl__ = (() => {
           window.addEventListener("pointercancel", finishDrag);
         }
       }, [detachDragListeners, stepDrag, finishDrag]);
-      const onDragMove = useCallback4((event) => {
+      const onDragMove = useCallback3((event) => {
         stepDrag(event);
       }, [stepDrag]);
-      const onDragEnd = useCallback4((event) => {
+      const onDragEnd = useCallback3((event) => {
         finishDrag(event);
       }, [finishDrag]);
-      const swallowClickAfterDrag = useCallback4((event) => {
+      const swallowClickAfterDrag = useCallback3((event) => {
         if (!suppressClickRef.current) return;
         suppressClickRef.current = false;
         event.preventDefault();
         event.stopPropagation();
       }, []);
-      useEffect6(() => () => detachDragListeners(), [detachDragListeners]);
-      useEffect6(() => {
+      useEffect5(() => () => detachDragListeners(), [detachDragListeners]);
+      useEffect5(() => {
         const sync = () => {
           const url = currentPageUrl(engine);
           setFavOn(url === "" ? false : isFavorite(url));
@@ -6745,7 +6011,7 @@ var __dshMusicOnImpl__ = (() => {
         sync();
         return subscribeLibrary(sync);
       }, [engine, state.track]);
-      const toggleFav = useCallback4(() => {
+      const toggleFav = useCallback3(() => {
         const track = state.track;
         const url = track && typeof track.pageUrl === "string" ? track.pageUrl : "";
         if (url === "") {
@@ -6759,7 +6025,7 @@ var __dshMusicOnImpl__ = (() => {
         setFavOn(result.favorited === true);
         flash(result.favorited === true ? t("dock.favorited", "已收藏") : t("dock.unfavorited", "已取消收藏"));
       }, [state.track, t]);
-      const onDragReset = useCallback4(() => {
+      const onDragReset = useCallback3(() => {
         dragRef.current = null;
         holdingRef.current = false;
         liveRef.current = null;
@@ -6775,7 +6041,7 @@ var __dshMusicOnImpl__ = (() => {
         }
         commitPos(null);
       }, [commitPos]);
-      useEffect6(() => {
+      useEffect5(() => {
         if (!pos) return void 0;
         const handle = () => {
           setPos((prev) => prev ? clampToViewport(prev.x, prev.y) : prev);
@@ -6783,8 +6049,8 @@ var __dshMusicOnImpl__ = (() => {
         window.addEventListener("resize", handle);
         return () => window.removeEventListener("resize", handle);
       }, [pos, clampToViewport]);
-      const queueReadyRef = useRef4(false);
-      useEffect6(() => {
+      const queueReadyRef = useRef3(false);
+      useEffect5(() => {
         if (!settings.rememberQueue) return;
         if (!queueReadyRef.current) {
           queueReadyRef.current = true;
@@ -6792,66 +6058,30 @@ var __dshMusicOnImpl__ = (() => {
         }
         saveQueue(queue);
       }, [queue, settings.rememberQueue]);
-      useEffect6(() => {
+      useEffect5(() => {
         if (note === null) return void 0;
         const ttl = note.tone === "bad" ? 15e3 : 4e3;
         const timer = window.setTimeout(() => setNote(null), ttl);
         return () => window.clearTimeout(timer);
       }, [note]);
-      const guard = useCallback4((fn) => async (...args) => {
+      const guard = useCallback3((fn) => async (...args) => {
         try {
           await fn(...args);
         } catch (error) {
           setNote({ tone: "bad", text: error && error.message ? error.message : String(error) });
         }
       }, []);
-      const flashRef = useRef4(setNote);
+      const flashRef = useRef3(setNote);
       flashRef.current = setNote;
-      const flash = useCallback4((text) => {
+      const flash = useCallback3((text) => {
         flashRef.current({ tone: "ok", text });
       }, []);
-      useEffect6(() => {
-        const controller = typeof AbortController === "function" ? new AbortController() : null;
-        const run = async () => {
-          if (typeof fetch !== "function") return;
-          try {
-            const response = await fetch(`${PRESETS_PATH}/manifest.json`, {
-              credentials: "same-origin",
-              signal: controller ? controller.signal : void 0
-            });
-            if (!response.ok) return;
-            const body = await response.json();
-            const items = Array.isArray(body && body.items) ? body.items : [];
-            setSoundscapes(items.filter((item) => item && item.source === "embedded" && item.status === "ready" && typeof item.file === "string" && item.file !== ""));
-          } catch (_error) {
-          }
-        };
-        void run();
-        return () => {
-          if (controller) controller.abort();
-        };
-      }, []);
-      const playSoundscape = guard(async (item) => {
-        if (!engine || !item) return;
-        const position2 = await engine.addManifest([{
-          id: item.id,
-          name: item.name,
-          url: `${PRESETS_PATH}/${item.file}`,
-          duration: item.duration,
-          loopStart: item.loopStart,
-          loopEnd: item.loopEnd
-        }], { playFirst: true });
-        if (position2 >= 0) {
-          engine.setLoopMode("one");
-          flash(t("dock.soundscapeOn", "音景已开始循环播放"));
-        }
-      });
       const togglePlay = guard(async () => {
         if (!engine) return;
         await engine.toggle();
       });
-      const restoredRef = useRef4(false);
-      useEffect6(() => {
+      const restoredRef = useRef3(false);
+      useEffect5(() => {
         if (restoredRef.current) return;
         if (!engine || typeof engine.addUrl !== "function") return;
         restoredRef.current = true;
@@ -6948,7 +6178,7 @@ var __dshMusicOnImpl__ = (() => {
         }
         flash(t("dock.embedClosed", "外部播放器已关闭，可在播放列表里重新打开"));
       });
-      const addFiles = useCallback4(async (files) => {
+      const addFiles = useCallback3(async (files) => {
         if (!engine || !files || files.length === 0) return;
         setBusy(true);
         try {
@@ -6961,7 +6191,7 @@ var __dshMusicOnImpl__ = (() => {
           setBusy(false);
         }
       }, [engine, t, autoFiles]);
-      const runSelfCheck = useCallback4(async () => {
+      const runSelfCheck = useCallback3(async () => {
         setBusy(true);
         try {
           const target = "/api/dsh-music-on/resolve?url=" + encodeURIComponent(BILIBILI_PROBE_URL);
@@ -6984,7 +6214,7 @@ var __dshMusicOnImpl__ = (() => {
           setBusy(false);
         }
       }, []);
-      const submitLink = useCallback4(async () => {
+      const submitLink = useCallback3(async () => {
         const text = draft.trim();
         if (!text) return;
         setBusy(true);
@@ -7009,7 +6239,7 @@ var __dshMusicOnImpl__ = (() => {
           setBusy(false);
         }
       }, [draft, engine, t, autoLinks, trackLimit]);
-      const onDragEnter = useCallback4((event) => {
+      const onDragEnter = useCallback3((event) => {
         if (!event.dataTransfer) return;
         const types = Array.from(event.dataTransfer.types || []);
         if (!types.includes("Files")) return;
@@ -7017,18 +6247,18 @@ var __dshMusicOnImpl__ = (() => {
         dragDepth.current += 1;
         setDragging(true);
       }, []);
-      const onDragOver = useCallback4((event) => {
+      const onDragOver = useCallback3((event) => {
         if (!event.dataTransfer) return;
         const types = Array.from(event.dataTransfer.types || []);
         if (!types.includes("Files")) return;
         event.preventDefault();
         event.dataTransfer.dropEffect = "copy";
       }, []);
-      const onDragLeave = useCallback4(() => {
+      const onDragLeave = useCallback3(() => {
         dragDepth.current = Math.max(0, dragDepth.current - 1);
         if (dragDepth.current === 0) setDragging(false);
       }, []);
-      const onDrop = useCallback4((event) => {
+      const onDrop = useCallback3((event) => {
         if (!event.dataTransfer) return;
         event.preventDefault();
         dragDepth.current = 0;
@@ -7042,7 +6272,7 @@ var __dshMusicOnImpl__ = (() => {
         }
         void addFiles(files);
       }, [addFiles, t]);
-      const onSeek = useCallback4((event) => {
+      const onSeek = useCallback3((event) => {
         const value = Number(event.target.value);
         if (!Number.isFinite(value) || !engine) return;
         try {
@@ -7050,7 +6280,7 @@ var __dshMusicOnImpl__ = (() => {
         } catch (_error) {
         }
       }, []);
-      const applyVolume = useCallback4((next, commit) => {
+      const applyVolume = useCallback3((next, commit) => {
         const raw = Number(next);
         if (!Number.isFinite(raw)) return;
         const value = Math.min(1, Math.max(0, raw));
@@ -7069,26 +6299,26 @@ var __dshMusicOnImpl__ = (() => {
           }
         }
       }, [engine, store]);
-      useEffect6(() => {
+      useEffect5(() => {
         const next = typeof settings.volume === "number" ? settings.volume : 0.8;
         if (Math.abs(next - volumeRef.current) > 5e-3) {
           volumeRef.current = next;
           setKnobValue(next);
         }
       }, [settings.volume]);
-      const stepVolume = useCallback4((deltaSteps) => {
+      const stepVolume = useCallback3((deltaSteps) => {
         const steps = Number(deltaSteps);
         if (!Number.isFinite(steps) || steps === 0) return;
         applyVolume(volumeRef.current + steps * 0.05, true);
       }, [applyVolume]);
-      const stepKnob = useCallback4((event) => {
+      const stepKnob = useCallback3((event) => {
         const drag = knobDragRef.current;
         if (!drag || drag.pointerId !== event.pointerId) return;
         const dy = event.clientY - drag.startY;
         if (!drag.moved && Math.abs(dy) >= 2) drag.moved = true;
         applyVolume(drag.startValue - dy / 130, false);
       }, [applyVolume]);
-      const detachKnobListeners = useCallback4(() => {
+      const detachKnobListeners = useCallback3(() => {
         const listeners2 = knobListenersRef.current;
         if (!listeners2 || typeof window === "undefined") return;
         window.removeEventListener("pointermove", listeners2.move);
@@ -7096,7 +6326,7 @@ var __dshMusicOnImpl__ = (() => {
         window.removeEventListener("pointercancel", listeners2.up);
         knobListenersRef.current = null;
       }, []);
-      const onKnobDown = useCallback4((event) => {
+      const onKnobDown = useCallback3((event) => {
         if (event.button !== 0) return;
         if (knobDragRef.current) return;
         detachKnobListeners();
@@ -7118,10 +6348,10 @@ var __dshMusicOnImpl__ = (() => {
           window.addEventListener("pointercancel", up);
         }
       }, [detachKnobListeners, stepKnob]);
-      const onKnobMove = useCallback4((event) => {
+      const onKnobMove = useCallback3((event) => {
         stepKnob(event);
       }, [stepKnob]);
-      const onKnobUp = useCallback4(() => {
+      const onKnobUp = useCallback3(() => {
         const drag = knobDragRef.current;
         if (!drag) return;
         knobDragRef.current = null;
@@ -7131,8 +6361,8 @@ var __dshMusicOnImpl__ = (() => {
         applyVolume(volumeRef.current, true);
       }, [applyVolume, detachKnobListeners]);
       onKnobUpRef.current = onKnobUp;
-      useEffect6(() => () => detachKnobListeners(), [detachKnobListeners]);
-      const onKnobKeys = useCallback4((event) => {
+      useEffect5(() => () => detachKnobListeners(), [detachKnobListeners]);
+      const onKnobKeys = useCallback3((event) => {
         const map = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 4, PageDown: -4 };
         if (event.key === "Home") {
           event.preventDefault();
@@ -7149,7 +6379,7 @@ var __dshMusicOnImpl__ = (() => {
         event.preventDefault();
         stepVolume(steps);
       }, [applyVolume, stepVolume]);
-      const onKnobClick = useCallback4(() => {
+      const onKnobClick = useCallback3(() => {
         if (knobMovedRef.current) {
           knobMovedRef.current = false;
           return;
@@ -7160,7 +6390,7 @@ var __dshMusicOnImpl__ = (() => {
           applyVolume(0, true);
         }
       }, [applyVolume]);
-      useEffect6(() => {
+      useEffect5(() => {
         const node = knobRef.current;
         if (!node || typeof node.addEventListener !== "function") return void 0;
         const onWheel = (event) => {
@@ -7171,7 +6401,7 @@ var __dshMusicOnImpl__ = (() => {
         node.addEventListener("wheel", onWheel, { passive: false });
         return () => node.removeEventListener("wheel", onWheel);
       }, [stepVolume, collapsed, hidden]);
-      const toggleSpectrum = useCallback4(() => {
+      const toggleSpectrum = useCallback3(() => {
         if (!store || typeof store.patch !== "function") {
           setNote({ tone: "bad", text: t("dock.noStore", "设置存储不可用，频谱开关不能落盘") });
           return;
@@ -7189,10 +6419,10 @@ var __dshMusicOnImpl__ = (() => {
           setNote({ tone: "bad", text: error && error.message ? error.message : String(error) });
         }
       }, [spectrumStyle, flash]);
-      useEffect6(() => {
+      useEffect5(() => {
         if (spectrumStyle !== "off") writeText(SPECTRUM_MEMO_KEY, spectrumStyle);
       }, [spectrumStyle]);
-      const cycleSize = useCallback4(() => {
+      const cycleSize = useCallback3(() => {
         if (!store || typeof store.patch !== "function") return;
         const index = SIZE_ORDER.indexOf(dockSize);
         const next = SIZE_ORDER[(index + 1) % SIZE_ORDER.length] || "normal";
@@ -7208,8 +6438,8 @@ var __dshMusicOnImpl__ = (() => {
       const duration = displayDuration(state);
       const position = state && typeof state.position === "number" ? state.position : 0;
       const external = Boolean(state && state.external);
-      const [embedDismissed, setEmbedDismissed] = useState5(false);
-      const embedKeyRef = useRef4(null);
+      const [embedDismissed, setEmbedDismissed] = useState4(false);
+      const embedKeyRef = useRef3(null);
       if (external) {
         const key = state && state.embedUrl || state && state.track && state.track.id || "external";
         if (embedKeyRef.current !== key) {
@@ -7220,7 +6450,7 @@ var __dshMusicOnImpl__ = (() => {
       const surface = playbackSurface(state);
       const seekPercent = Number.isFinite(duration) && duration > 0 && Number.isFinite(position) ? Math.min(100, Math.max(0, position / duration * 100)) : 0;
       const knobAngle = -135 + 270 * Math.min(1, Math.max(0, knobValue));
-      const knob = h6(
+      const knob = h5(
         "div",
         {
           ref: knobRef,
@@ -7248,24 +6478,28 @@ var __dshMusicOnImpl__ = (() => {
           onClick: onKnobClick,
           onKeyDown: onKnobKeys
         },
-        h6("span", { className: "dmo-knob-arc", "aria-hidden": "true" }),
-        h6(
+        h5("span", { className: "dmo-knob-arc", "aria-hidden": "true" }),
+        h5(
           "span",
           { className: "dmo-knob-cap", "aria-hidden": "true" },
-          h6("span", { className: "dmo-knob-pointer", "aria-hidden": "true" })
+          h5("span", { className: "dmo-knob-pointer", "aria-hidden": "true" })
         ),
-        h6(
+        h5(
           "span",
           { className: "dmo-knob-readout", "aria-hidden": "true" },
           knobValue <= 1e-3 ? "静音" : `${Math.round(knobValue * 100)}`
         )
       );
-      const loopButton = h6("button", {
+      const loopMode = state && state.loopMode || "all";
+      const loopLabel = loopMode === "one" ? t("dock.loopOne", "单曲循环") : loopMode === "off" ? t("dock.loopOff", "不循环") : t("dock.loopAll", "列表循环");
+      const loopButton = h5("button", {
         type: "button",
         className: "dmo-chip",
-        title: t("dock.loop", "循环模式"),
+        "data-loop": loopMode,
+        title: `${t("dock.loop", "循环模式")} · ${loopLabel}`,
+        "aria-label": `${t("dock.loop", "循环模式")}: ${loopLabel}`,
         onClick: () => guard(async () => engine.cycleLoopMode())()
-      }, state && state.loopMode || "off");
+      }, loopLabel);
       const blockedReason = state && state.track && typeof state.track.unavailableReason === "string" && state.track.unavailableReason !== "" ? state.track.unavailableReason : null;
       const panelClass = [
         "dmo-dock",
@@ -7275,13 +6509,17 @@ var __dshMusicOnImpl__ = (() => {
         showTitles ? "" : "dmo-dock--no-titles"
       ].filter(Boolean).join(" ");
       const stackStyle = dockPositionStyle(holding, pos, liveRef.current);
-      const wrapStack = (...children) => h6("div", {
+      const wrapStack = (...children) => h5("div", {
         className: "dmo-dock-stack",
         ref: stackRef,
         style: stackStyle,
-        "data-depth": spectrumDepth
+        "data-depth": spectrumDepth,
+        // 主题只体现在这个自定义属性上：CSS 里 [data-theme='x'] 覆盖一套令牌。
+        // 挂在 stack 而不是 document 上，是为了不污染宿主页面 —— 但设置分区
+        // 不在 stack 里，所以 Settings 那边单独挂一份（见 Settings.jsx 的根节点）。
+        "data-dmo-theme": theme
       }, ...children);
-      const spectrumBar = spectrumPlacement === "bar" && engine && spectrumStyle !== "off" ? h6("div", {
+      const spectrumBar = spectrumPlacement === "bar" && engine && spectrumStyle !== "off" ? h5("div", {
         className: "dmo-barspectrum",
         "data-style": spectrumStyle,
         "data-glow": spectrumCfg.glow,
@@ -7289,10 +6527,16 @@ var __dshMusicOnImpl__ = (() => {
         // 通栏频谱走 fixed 贴视口底沿，本来就**不**跟随胶囊位置：
         // 它是「页面底部」的装饰，胶囊挪到哪儿它都该留在底部。
         // 这里绝不能引用 .dmo-dock-stack 的坐标，也不能改成 absolute。
-        style: { height: `${spectrumCfg.height}px` }
-      }, props.Spectrum ? h6(props.Spectrum, { engine, settings: { ...settings, ...spectrumCfg } }) : null) : null;
+        //
+        // 宽度走 --dmo-span：整条带子按视口百分比铺开并居中，剩下的留白交给
+        // margin auto（不是 transform，避免和 [data-depth] 的层叠/过渡打架）。
+        style: {
+          height: `${spectrumCfg.height}px`,
+          "--dmo-span": `${spectrumSpan}%`
+        }
+      }, props.Spectrum ? h5(props.Spectrum, { engine, settings: { ...settings, ...spectrumCfg } }) : null) : null;
       if (hidden) {
-        return wrapStack(h6("button", {
+        return wrapStack(h5("button", {
           type: "button",
           className: "dmo-dock-revive",
           title: t("dock.show", "显示音乐库"),
@@ -7301,7 +6545,7 @@ var __dshMusicOnImpl__ = (() => {
         }, "♪"), spectrumBar);
       }
       if (collapsed) {
-        return wrapStack(h6(
+        return wrapStack(h5(
           "div",
           {
             ref: panelRef,
@@ -7325,28 +6569,28 @@ var __dshMusicOnImpl__ = (() => {
             onDragLeave,
             onDrop
           },
-          h6(
+          h5(
             "div",
             { className: "dmo-capsule" },
             // 黑胶只是视觉与双击复位入口：pointerdown 已经上移到整枚胶囊，
             // 这里再挂一次会让同一次按下触发两遍 onDragStart（第二次把 grabX 覆盖成
             // 相对手柄的偏移），所以只在手柄上保留双击复位。
-            h6("span", {
+            h5("span", {
               className: "dmo-drag-handle",
               title: t("dock.dragHint", "拖动移动位置，双击复位"),
               "aria-hidden": true,
               ref: collapsedHandleRef,
               onDoubleClick: onDragReset
-            }, h6(
+            }, h5(
               "span",
               { className: "dmo-vinyl", "data-playing": playing ? "1" : void 0, "data-cover": trackCover(state) ? "1" : void 0 },
-              trackCover(state) ? h6("img", { className: "dmo-vinyl-cover", src: trackCover(state), alt: "", draggable: false, onError: (e) => {
+              trackCover(state) ? h5("img", { className: "dmo-vinyl-cover", src: trackCover(state), alt: "", draggable: false, onError: (e) => {
                 const el = e.currentTarget;
                 el.style.display = "none";
               } }) : null,
-              h6("span", { className: "dmo-vinyl-label" }, playing ? "♫" : "♪")
+              h5("span", { className: "dmo-vinyl-label" }, playing ? "♫" : "♪")
             )),
-            h6(
+            h5(
               "button",
               {
                 type: "button",
@@ -7355,15 +6599,15 @@ var __dshMusicOnImpl__ = (() => {
                 "aria-expanded": false,
                 onClick: () => setCollapsed(false)
               },
-              h6(
+              h5(
                 "span",
                 { className: "dmo-capsule-text" },
-                h6("span", { className: "dmo-capsule-name" }, trackLabel(state, t)),
-                h6("span", { className: "dmo-capsule-meta" }, `${fmtTime(position)} / ${fmtTime(duration)}`)
+                h5("span", { className: "dmo-capsule-name" }, trackLabel(state, t)),
+                h5("span", { className: "dmo-capsule-meta" }, `${fmtTime(position)} / ${fmtTime(duration)}`)
               )
             ),
             // 频谱一键开关就放在胶囊上：用户看着频谱动，想关掉时不该被迫先展开卡片。
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-capsule-spectrum",
               "data-on": spectrumOn ? "1" : void 0,
@@ -7375,7 +6619,7 @@ var __dshMusicOnImpl__ = (() => {
                 toggleSpectrum();
               }
             }, spectrumOn ? "≋" : "∅"),
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-capsule-btn",
               title: playing ? t("dock.pause", "暂停") : t("dock.play", "播放"),
@@ -7385,14 +6629,14 @@ var __dshMusicOnImpl__ = (() => {
                 void togglePlay();
               }
             }, playing ? "❚❚" : "▶"),
-            h6("span", { className: "dmo-capsule-dot", "data-busy": busy ? "1" : void 0 }),
+            h5("span", { className: "dmo-capsule-dot", "data-busy": busy ? "1" : void 0 }),
             // 收起态也要能看见提示：切换频谱的确认、拖放的拒绝原因都落在这里。
-            note ? h6("span", { className: `dmo-capsule-note dmo-note--${note.tone}`, title: note.text }, note.text) : null
+            note ? h5("span", { className: `dmo-capsule-note dmo-note--${note.tone}`, title: note.text }, note.text) : null
           ),
-          dragging ? h6("div", { className: "dmo-dock-dropveil" }, t("dock.dropHere", "松手即播放")) : null
+          dragging ? h5("div", { className: "dmo-dock-dropveil" }, t("dock.dropHere", "松手即播放")) : null
         ), spectrumBar);
       }
-      const panel = h6(
+      const panel = h5(
         "div",
         {
           ref: panelRef,
@@ -7415,17 +6659,17 @@ var __dshMusicOnImpl__ = (() => {
         // 关闭按钮不可省：iframe 是全屏级文档，里面点任何东西都出不来。
         // 用户想「关掉这个播放器」时，界面上必须有个属于本插件的出口 ——
         // 否则只能把整条队列清空，代价太大。
-        surface.external && !embedDismissed ? h6(
+        surface.external && !embedDismissed ? h5(
           "div",
           { className: "dmo-embed" },
-          h6("button", {
+          h5("button", {
             type: "button",
             className: "dmo-embed-close",
             title: t("dock.embedClose", "关闭外部播放器"),
             "aria-label": t("dock.embedClose", "关闭外部播放器"),
             onClick: closeEmbed
           }, "✕"),
-          surface.embedUrl ? h6("iframe", {
+          surface.embedUrl ? h5("iframe", {
             className: "dmo-embed-frame",
             src: surface.embedUrl,
             title: trackLabel(state, t),
@@ -7434,23 +6678,23 @@ var __dshMusicOnImpl__ = (() => {
             scrolling: "no",
             sandbox: "allow-scripts allow-same-origin allow-presentation allow-popups allow-forms",
             referrerPolicy: "no-referrer-when-downgrade"
-          }) : h6("div", { className: "dmo-embed-missing" }, t("dock.noEmbed", "这条音源没有可嵌入的地址")),
-          h6(
+          }) : h5("div", { className: "dmo-embed-missing" }, t("dock.noEmbed", "这条音源没有可嵌入的地址")),
+          h5(
             "div",
             { className: "dmo-embed-note" },
             t("dock.embedNote", "外部播放器：进度与音量由播放器自身控制，频谱不可用")
           )
         ) : null,
-        h6(
+        h5(
           "div",
           { className: "dmo-card" },
           // 黑胶舞台：展开后延续胶囊的黑胶语言，封面来自解析层给的 track.cover。
-          // 没有封面（本地文件、纯预置音景）时退化为纯黑胶，不显示空白 img。
+          // 没有封面（本地文件、直链音频）时退化为纯黑胶，不显示空白 img。
           //
           // 拖动事件挂在**整个舞台**（含封面与元信息），不只挂在黑胶那块小圆盘上：
           // 圆盘只有 68px，用户很难精准按住，之前「拖不动」很可能就是没按中手柄。
           // 舞台内没有可交互控件，pointerdown 挂在这里不会吃掉任何点击。
-          h6(
+          h5(
             "div",
             {
               className: "dmo-vinyl-stage",
@@ -7462,20 +6706,20 @@ var __dshMusicOnImpl__ = (() => {
               onPointerCancel: onDragEnd,
               onDoubleClick: onDragReset
             },
-            h6(
+            h5(
               "div",
               {
                 className: "dmo-drag-handle dmo-drag-handle--stage",
                 ref: stageHandleRef
               },
-              h6(
+              h5(
                 "span",
                 {
                   className: "dmo-vinyl dmo-vinyl--lg",
                   "data-playing": playing ? "1" : void 0,
                   "data-cover": trackCover(state) ? "1" : void 0
                 },
-                trackCover(state) ? h6("img", {
+                trackCover(state) ? h5("img", {
                   className: "dmo-vinyl-cover",
                   src: trackCover(state),
                   alt: "",
@@ -7484,14 +6728,14 @@ var __dshMusicOnImpl__ = (() => {
                     e.currentTarget.style.display = "none";
                   }
                 }) : null,
-                h6("span", { className: "dmo-vinyl-label" }, playing ? "♫" : "♪")
+                h5("span", { className: "dmo-vinyl-label" }, playing ? "♫" : "♪")
               )
             ),
-            h6(
+            h5(
               "div",
               { className: "dmo-vinyl-meta" },
-              h6("span", { className: "dmo-vinyl-title" }, trackLabel(state, t)),
-              h6(
+              h5("span", { className: "dmo-vinyl-title" }, trackLabel(state, t)),
+              h5(
                 "span",
                 { className: "dmo-vinyl-sub" },
                 surface.external ? t("dock.externalBadge", "外部播放器") : state.artist || t("dock.localBadge", "本地播放")
@@ -7499,17 +6743,17 @@ var __dshMusicOnImpl__ = (() => {
             )
           ),
           // 卡片头
-          h6(
+          h5(
             "div",
             { className: "dmo-card-head" },
-            h6("span", { className: "dmo-card-title" }, t("dock.title", "音乐库")),
-            h6("span", { className: "dmo-card-sub" }, trackLabel(state, t)),
-            h6(
+            h5("span", { className: "dmo-card-title" }, t("dock.title", "音乐库")),
+            h5("span", { className: "dmo-card-sub" }, trackLabel(state, t)),
+            h5(
               "span",
               { className: "dmo-card-head-actions" },
               // 收藏当前曲目。星标放在卡片右上角（locale 文案也是这么引导用户的）。
               // 没有可保存地址时按钮仍然可点 —— 点了会给出原因，比一个静默禁用的按钮诚实。
-              h6("button", {
+              h5("button", {
                 type: "button",
                 className: `dmo-icon dmo-icon--fav${favOn ? " is-on" : ""}`,
                 title: favOn ? t("dock.favorited", "已收藏") : t("dock.favorite", "收藏当前曲目"),
@@ -7518,7 +6762,7 @@ var __dshMusicOnImpl__ = (() => {
                 onClick: toggleFav
               }, favOn ? "★" : "☆"),
               // 三档尺寸的快捷入口：用户要「大中小三个大小」，不该每次进设置页。
-              h6("button", {
+              h5("button", {
                 type: "button",
                 className: "dmo-icon dmo-icon--size",
                 title: `${t("dock.sizeCycle", "切换大小")}（${SIZE_LABELS[dockSize] || "中"}）`,
@@ -7526,7 +6770,7 @@ var __dshMusicOnImpl__ = (() => {
                 "data-size": dockSize,
                 onClick: cycleSize
               }, SIZE_GLYPHS[dockSize] || "▭"),
-              h6("button", {
+              h5("button", {
                 type: "button",
                 className: `dmo-icon dmo-icon--spectrum${spectrumOn ? " is-on" : ""}`,
                 title: spectrumOn ? t("dock.spectrumOff", "关闭频谱") : t("dock.spectrumOn", "打开频谱"),
@@ -7536,7 +6780,7 @@ var __dshMusicOnImpl__ = (() => {
               }, "≋"),
               // 「藏起来」的频谱需要一个临时提上来的入口：平时它压在页面下面，
               // 用户想确认它在动，按下这个键就能让它浮上来亮 3 秒再沉回去。
-              spectrumDepth === "back" ? h6("button", {
+              spectrumDepth === "back" ? h5("button", {
                 type: "button",
                 className: `dmo-icon dmo-icon--peek${peekSpectrum ? " is-on" : ""}`,
                 title: peekSpectrum ? t("dock.spectrumSink", "让频谱沉回页面下") : t("dock.spectrumPeek", "把频谱提上来看看"),
@@ -7544,14 +6788,14 @@ var __dshMusicOnImpl__ = (() => {
                 "aria-pressed": peekSpectrum,
                 onClick: () => setPeekSpectrum((prev) => !prev)
               }, "⤒") : null,
-              h6("button", {
+              h5("button", {
                 type: "button",
                 className: "dmo-icon",
                 title: t("dock.collapse", "收起"),
                 "aria-label": t("dock.collapse", "收起"),
                 onClick: () => setCollapsed(true)
               }, "▾"),
-              h6("button", {
+              h5("button", {
                 type: "button",
                 className: "dmo-icon",
                 title: t("dock.hide", "隐藏"),
@@ -7561,17 +6805,17 @@ var __dshMusicOnImpl__ = (() => {
             )
           ),
           // 走带：上一首 / 播放 / 下一首，右侧挂音量旋钮与循环
-          h6(
+          h5(
             "div",
             { className: "dmo-transport" },
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-icon dmo-icon--lg",
               title: t("dock.prev", "上一首"),
               "aria-label": t("dock.prev", "上一首"),
               onClick: () => guard(async () => engine.prev())()
             }, "⏮"),
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-play",
               title: playing ? t("dock.pause", "暂停") : t("dock.play", "播放"),
@@ -7579,25 +6823,25 @@ var __dshMusicOnImpl__ = (() => {
               disabled: busy,
               onClick: () => void togglePlay()
             }, playing ? "❚❚" : "▶"),
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-icon dmo-icon--lg",
               title: t("dock.next", "下一首"),
               "aria-label": t("dock.next", "下一首"),
               onClick: () => guard(async () => engine.next())()
             }, "⏭"),
-            h6("div", { className: "dmo-transport-tail" }, knob, loopButton)
+            h5("div", { className: "dmo-transport-tail" }, knob, loopButton)
           ),
           // 进度条独占一整行。
           //
           // 原先进度条被塞在走带行里，与上一首/播放/下一首、两个时间戳抢同一行，
           // 在 340px 宽的卡片里只剩几十像素 —— 既看不出进度也拖不准。
           // 用户的诉求很直接：最长的那根横条应该是音乐进度，不是音量。
-          h6(
+          h5(
             "div",
             { className: "dmo-progress" },
-            h6("span", { className: "dmo-time" }, fmtTime(position)),
-            h6("input", {
+            h5("span", { className: "dmo-time" }, fmtTime(position)),
+            h5("input", {
               className: "dmo-seek",
               type: "range",
               min: 0,
@@ -7612,10 +6856,10 @@ var __dshMusicOnImpl__ = (() => {
               style: { "--dmo-seek-p": `${seekPercent}%` },
               onChange: onSeek
             }),
-            h6("span", { className: "dmo-time" }, fmtTime(duration))
+            h5("span", { className: "dmo-time" }, fmtTime(duration))
           ),
           // 链接输入
-          h6(
+          h5(
             "form",
             {
               className: "dmo-link",
@@ -7624,7 +6868,7 @@ var __dshMusicOnImpl__ = (() => {
                 void submitLink();
               }
             },
-            h6("input", {
+            h5("input", {
               className: "dmo-link-input",
               type: "text",
               value: draft,
@@ -7632,12 +6876,12 @@ var __dshMusicOnImpl__ = (() => {
               "aria-label": t("dock.linkPlaceholder", "粘贴链接"),
               onChange: (event) => setDraft(event.target.value)
             }),
-            h6("button", {
+            h5("button", {
               type: "submit",
               className: "dmo-btn dmo-primary",
               disabled: busy || draft.trim() === ""
             }, t("dock.add", "加入")),
-            h6("button", {
+            h5("button", {
               type: "button",
               className: "dmo-btn dmo-selfcheck",
               title: "打一次 /api/dsh-music-on/resolve，把真实 HTTP 状态显示出来",
@@ -7647,58 +6891,21 @@ var __dshMusicOnImpl__ = (() => {
               }
             }, t("dock.selfCheck", "自检"))
           ),
-          // 音景一排：七条自带 WAV 的快捷入口。
-          //
-          // 缺了它，卡片能做的只有「拖文件 / 粘链接」，而插件包里明明躺着七条合成音景
-          // —— 那是最容易被当成功能没做完的地方。这里默认收起成一枚按钮，
-          // 展开才铺开七个 chip，避免把卡片撑得比播放列表还长。
-          soundscapes.length > 0 ? h6(
-            "div",
-            { className: "dmo-soundscapes" },
-            h6(
-              "button",
-              {
-                type: "button",
-                className: `dmo-soundscapes-head${soundscapeOpen ? " is-open" : ""}`,
-                title: t("dock.soundscapeHint", "自带七条可无缝循环的合成音景"),
-                "aria-expanded": soundscapeOpen,
-                onClick: () => setSoundscapeOpen((prev) => !prev)
-              },
-              h6("span", { className: "dmo-soundscapes-caret" }, soundscapeOpen ? "▾" : "▸"),
-              h6("span", { className: "dmo-soundscapes-title" }, t("dock.soundscapes", "音景")),
-              h6("span", { className: "dmo-soundscapes-count" }, `${soundscapes.length}`)
-            ),
-            soundscapeOpen ? h6(
-              "div",
-              { className: "dmo-soundscapes-body" },
-              soundscapes.map((item) => h6("button", {
-                key: item.id,
-                type: "button",
-                className: "dmo-chip",
-                "data-preset-id": item.id,
-                title: item.nameEn ? `${item.name} · ${item.nameEn}` : item.name,
-                disabled: busy,
-                onClick: () => {
-                  void playSoundscape(item);
-                }
-              }, item.name || item.id))
-            ) : null
-          ) : null,
           // 播放列表
           //
           // 这不是「队列的另一份 UI」，而是唯一让用户看见「先放什么、后放什么」的地方。
           // 引擎本身一直是数组队列，缺的只是可读的列表：序号、曲名、时长、逐条删除。
           // 每行必须是 div 而不是 button——行里还有删除按钮，button 嵌套 button 在
           // HTML 里是非法的，浏览器会直接把内层按钮拆出去，点删除会误触发播放。
-          h6(
+          h5(
             "div",
             { className: "dmo-queue" },
-            h6(
+            h5(
               "div",
               { className: "dmo-queue-head" },
-              h6("span", { className: "dmo-queue-title" }, t("dock.playlist", "播放列表")),
-              h6("span", { className: "dmo-queue-count" }, `${queue.length}`),
-              queue.length > 0 ? h6("button", {
+              h5("span", { className: "dmo-queue-title" }, t("dock.playlist", "播放列表")),
+              h5("span", { className: "dmo-queue-count" }, `${queue.length}`),
+              queue.length > 0 ? h5("button", {
                 type: "button",
                 className: "dmo-queue-clear",
                 title: t("dock.clear", "清空"),
@@ -7709,11 +6916,11 @@ var __dshMusicOnImpl__ = (() => {
                 })()
               }, t("dock.clear", "清空")) : null
             ),
-            queue.length === 0 ? h6("div", { className: "dmo-queue-empty" }, t("dock.queueEmpty", "拖入音频，或粘贴链接，或从预置里挑一首")) : h6("div", { className: "dmo-queue-list" }, queue.map((item, index) => {
+            queue.length === 0 ? h5("div", { className: "dmo-queue-empty" }, t("dock.queueEmpty", "拖入音频，或粘贴歌单链接")) : h5("div", { className: "dmo-queue-list" }, queue.map((item, index) => {
               const active = Boolean(item && state.track && state.track.id === item.id);
               const seconds = typeof item.duration === "number" ? item.duration : NaN;
               const blocked = typeof item.unavailableReason === "string" && item.unavailableReason !== "";
-              return h6(
+              return h5(
                 "div",
                 {
                   key: `${item.id || index}`,
@@ -7721,19 +6928,19 @@ var __dshMusicOnImpl__ = (() => {
                   "data-kind": item.kind || "",
                   "data-blocked": blocked ? "1" : void 0
                 },
-                h6("span", { className: "dmo-queue-index" }, active ? "▶" : String(index + 1)),
-                h6("button", {
+                h5("span", { className: "dmo-queue-index" }, active ? "▶" : String(index + 1)),
+                h5("button", {
                   type: "button",
                   className: "dmo-queue-name",
                   title: blocked ? `${item.title || item.name || ""} — ${item.unavailableReason}` : item.title || item.name || "",
                   onClick: () => guard(async () => engine.loadAt(index))()
                 }, item.title || item.name || t("dock.untitled", "未命名")),
-                blocked ? h6("span", {
+                blocked ? h5("span", {
                   className: "dmo-queue-badge",
                   title: item.unavailableReason
                 }, t("dock.vipBadge", "无直链")) : null,
-                h6("span", { className: "dmo-queue-time" }, Number.isFinite(seconds) && seconds > 0 ? fmtTime(seconds) : ""),
-                h6("button", {
+                h5("span", { className: "dmo-queue-time" }, Number.isFinite(seconds) && seconds > 0 ? fmtTime(seconds) : ""),
+                h5("button", {
                   type: "button",
                   className: "dmo-queue-del",
                   title: t("dock.remove", "移除"),
@@ -7750,31 +6957,31 @@ var __dshMusicOnImpl__ = (() => {
           // 三种通道都要说清楚，尤其第三种：网易云/QQ 的会员曲**没有票据**，
           // 它入队成功、曲名正常显示、卡片看不出任何异样，点下去却必然报错。
           // 这一行把「为什么不会响」写在界面上，而不是留给用户猜。
-          surface.external ? h6(
+          surface.external ? h5(
             "div",
             { className: "dmo-diag" },
-            h6("span", { className: "dmo-diag-label" }, t("dock.diagTitle", "播放通道")),
-            h6(
+            h5("span", { className: "dmo-diag-label" }, t("dock.diagTitle", "播放通道")),
+            h5(
               "span",
               { className: "dmo-diag-value" },
               surface.embedUrl ? t("dock.diagExternal", "内嵌播放器（频谱不可用）") : t("dock.diagNoEmbed", "没有可用的播放地址")
             )
-          ) : blockedReason ? h6(
+          ) : blockedReason ? h5(
             "div",
             { className: "dmo-diag dmo-diag--blocked" },
-            h6("span", { className: "dmo-diag-label" }, t("dock.diagTitle", "播放通道")),
-            h6("span", { className: "dmo-diag-value" }, blockedReason)
+            h5("span", { className: "dmo-diag-label" }, t("dock.diagTitle", "播放通道")),
+            h5("span", { className: "dmo-diag-value" }, blockedReason)
           ) : null,
-          note ? h6("div", { className: `dmo-note dmo-note--${note.tone}` }, note.text) : null,
-          dragging ? h6("div", { className: "dmo-dock-dropveil" }, t("dock.dropHere", "松手即播放")) : null
+          note ? h5("div", { className: `dmo-note dmo-note--${note.tone}` }, note.text) : null,
+          dragging ? h5("div", { className: "dmo-dock-dropveil" }, t("dock.dropHere", "松手即播放")) : null
         )
       );
       return wrapStack(panel, spectrumBar);
     };
   }
-  function useStoreSnapshot(React3, store) {
-    const [snap, setSnap] = React3.useState(() => store && store.get ? store.get() : {});
-    React3.useEffect(() => {
+  function useStoreSnapshot(React2, store) {
+    const [snap, setSnap] = React2.useState(() => store && store.get ? store.get() : {});
+    React2.useEffect(() => {
       if (!store || typeof store.subscribe !== "function") return void 0;
       setSnap(store.get());
       return store.subscribe((next) => setSnap(next || {}));
@@ -7845,208 +7052,9 @@ var __dshMusicOnImpl__ = (() => {
   }
 
   // src/client/ui/PlayerPanel.jsx
-  var import_react2 = __toESM(__require("react"), 1);
-
-  // src/client/ui/PresetsSection.jsx
   var import_react = __toESM(__require("react"), 1);
   var h = (...args) => {
     const create = import_react.default.createElement || import_react.default.default && import_react.default.default.createElement;
-    return create(...args);
-  };
-  var CATEGORY_LABEL = Object.freeze({
-    "white-noise": "白噪音",
-    rain: "雨声",
-    cafe: "咖啡馆",
-    beat: "鼓点",
-    jazz: "爵士",
-    lofi: "Lo-Fi"
-  });
-  var STATUS_LABEL = Object.freeze({
-    ready: "就绪",
-    "needs-config": "未配置",
-    unavailable: "不可用"
-  });
-  function PresetChip(props) {
-    const { item, runtime, currentId, onPick } = props;
-    const isCurrent = currentId === item.id;
-    const status = runtime && runtime.status || item.status;
-    const busy = status === "preparing";
-    const broken = status === "error" || status === "unavailable";
-    const notReady = item.playable !== true;
-    const className = [
-      "dmo-chip",
-      isCurrent ? "dmo-chip-on" : "",
-      busy ? "dmo-chip-busy" : "",
-      broken ? "dmo-chip-bad" : "",
-      notReady ? "dmo-chip-off" : ""
-    ].filter(Boolean).join(" ");
-    const title = broken ? runtime && runtime.reason ? runtime.reason : item.unavailableReason || "该条目不可用" : notReady ? `${item.name}：${STATUS_LABEL[item.status] || item.status}${item.source === "bilibili-embed" ? "（需在 manifest.json 填入 bvid）" : item.source === "platform-link" ? "（需填入歌单页链接）" : ""}` : item.spectrumAvailable === false ? `${item.name}：可播放，但该源不提供频谱` : item.name;
-    return h(
-      "button",
-      {
-        type: "button",
-        className,
-        title,
-        disabled: notReady || busy,
-        "data-preset-id": item.id,
-        "aria-pressed": isCurrent ? "true" : "false",
-        onClick: () => onPick(item)
-      },
-      h("span", { className: "dmo-chip-name" }, item.name || CATEGORY_LABEL[item.category] || item.id),
-      // 只有「可播但没频谱」才标；不可播的条目已经有自己的红点语义。
-      !notReady && item.spectrumAvailable === false ? h("span", { className: "dmo-chip-tag" }, "无频谱") : null,
-      busy ? h("span", { className: "dmo-chip-tag" }, "载入中") : null,
-      broken ? h("span", { className: "dmo-chip-dot", "aria-hidden": "true" }) : null
-    );
-  }
-  function PresetsSection(props) {
-    const { presets, onNotice, seed } = props || {};
-    const [open, setOpen] = (0, import_react.useState)(true);
-    const [error, setError] = (0, import_react.useState)("");
-    const [runtime, setRuntime] = (0, import_react.useState)({});
-    const [currentId, setCurrentId] = (0, import_react.useState)(null);
-    const mounted = (0, import_react.useRef)(true);
-    (0, import_react.useEffect)(() => {
-      mounted.current = true;
-      return () => {
-        mounted.current = false;
-      };
-    }, []);
-    (0, import_react.useEffect)(() => {
-      if (!presets || typeof presets.onChange !== "function") return void 0;
-      const off = presets.onChange((event) => {
-        if (!mounted.current || !event) return;
-        if (event.type === "error" && event.id) {
-          setRuntime((prev) => ({
-            ...prev,
-            [event.id]: { status: "error", reason: event.error && event.error.message }
-          }));
-          return;
-        }
-        if ((event.type === "embed" || event.type === "external") && event.id) {
-          setCurrentId(event.id);
-          return;
-        }
-        if (event.type === "cached" && event.id) {
-          setRuntime((prev) => ({ ...prev, [event.id]: { status: "ready" } }));
-        }
-      });
-      return off;
-    }, [presets, seed]);
-    const categories = (0, import_react.useMemo)(() => {
-      if (!presets || typeof presets.categories !== "function") return [];
-      try {
-        return presets.categories();
-      } catch (cause) {
-        void cause;
-        return [];
-      }
-    }, [presets, seed]);
-    const issues = (0, import_react.useMemo)(() => {
-      if (!presets || typeof presets.unavailableReport !== "function") return [];
-      try {
-        return presets.unavailableReport();
-      } catch {
-        return [];
-      }
-    }, [presets, seed]);
-    const pick = (0, import_react.useCallback)(
-      async (item) => {
-        if (!presets) return;
-        setError("");
-        try {
-          const result = await presets.play(item.id);
-          if (!mounted.current) return;
-          if (result && result.mode === "external" && result.url) {
-            window.open(result.url, "_blank", "noopener,noreferrer");
-            onNotice && onNotice(`已在新标签页打开 ${item.name}`);
-            return;
-          }
-          if (result && result.mode === "iframe") {
-            onNotice && onNotice(`${item.name}：B 站嵌入播放，频谱不可用`);
-            setCurrentId(item.id);
-            return;
-          }
-          setCurrentId(item.id);
-        } catch (cause) {
-          if (!mounted.current) return;
-          const message = cause && cause.message ? cause.message : "音景加载失败";
-          setError(message);
-          onNotice && onNotice(message);
-        }
-      },
-      [presets, onNotice]
-    );
-    if (!presets) {
-      return h(
-        "section",
-        { className: "dmo-presets dmo-presets-loading" },
-        h("div", { className: "dmo-presets-head" }, h("span", { className: "dmo-presets-title" }, "音景")),
-        h("div", { className: "dmo-presets-hint" }, "预置音景加载中…")
-      );
-    }
-    const total = categories.reduce((sum, c) => sum + c.items.length, 0);
-    const readyCount = categories.reduce((sum, c) => sum + c.counts.ready, 0);
-    return h(
-      "section",
-      { className: open ? "dmo-presets" : "dmo-presets dmo-presets-closed" },
-      h(
-        "div",
-        { className: "dmo-presets-head" },
-        h(
-          "button",
-          {
-            type: "button",
-            className: "dmo-presets-title-btn",
-            onClick: () => setOpen((v) => !v),
-            "aria-expanded": open ? "true" : "false",
-            title: open ? "收起音景" : "展开音景"
-          },
-          h("span", { className: "dmo-presets-caret" }, open ? "▾" : "▸"),
-          h("span", { className: "dmo-presets-title" }, "音景"),
-          h("span", { className: "dmo-presets-count" }, `${readyCount}/${total}`)
-        ),
-        issues.length > 0 ? h(
-          "span",
-          {
-            className: "dmo-presets-warn",
-            title: issues.map((i) => `${i.name}：${i.reason}`).join("\n")
-          },
-          `${issues.length} 项未就绪`
-        ) : null
-      ),
-      open ? h(
-        "div",
-        { className: "dmo-presets-body" },
-        ...categories.map(
-          (category) => h(
-            "div",
-            { className: "dmo-presets-group", key: category.id },
-            h("div", { className: "dmo-presets-group-name" }, CATEGORY_LABEL[category.id] || category.name || category.id),
-            h(
-              "div",
-              { className: "dmo-presets-chips" },
-              ...category.items.map(
-                (item) => h(PresetChip, {
-                  key: item.id,
-                  item,
-                  runtime: runtime[item.id],
-                  currentId,
-                  onPick: pick
-                })
-              )
-            )
-          )
-        ),
-        error !== "" ? h("div", { className: "dmo-presets-error", role: "alert" }, error) : null,
-        h("div", { className: "dmo-presets-hint" }, "自研合成音可循环无缝播放；B 站条目为嵌入播放，不产生频谱。")
-      ) : null
-    );
-  }
-
-  // src/client/ui/PlayerPanel.jsx
-  var h2 = (...args) => {
-    const create = import_react2.default.createElement || import_react2.default.default && import_react2.default.default.createElement;
     return create(...args);
   };
   function formatTime(seconds) {
@@ -8069,14 +7077,14 @@ var __dshMusicOnImpl__ = (() => {
     one: "↻¹"
   });
   function QueueRow({ item, onSelect, onRemove }) {
-    const badge = item.kind === KIND_EXTERNAL_EMBED ? "外链" : item.source === "preset" ? "音景" : "";
-    return h2(
+    const badge = item.kind === KIND_EXTERNAL_EMBED ? "外链" : "";
+    return h(
       "li",
       {
         className: item.current ? "dmo-queue-row dmo-queue-row-current" : "dmo-queue-row",
         "data-index": String(item.index)
       },
-      h2(
+      h(
         "button",
         {
           type: "button",
@@ -8084,18 +7092,18 @@ var __dshMusicOnImpl__ = (() => {
           onClick: () => onSelect(item.index),
           title: item.unavailableReason ? `${item.title} - ${item.unavailableReason}` : item.title
         },
-        h2("span", { className: "dmo-queue-index" }, item.current ? "▶" : String(item.index + 1)),
-        h2(
+        h("span", { className: "dmo-queue-index" }, item.current ? "▶" : String(item.index + 1)),
+        h(
           "span",
           { className: "dmo-queue-text" },
-          h2("span", { className: "dmo-queue-title" }, item.title),
-          item.artist ? h2("span", { className: "dmo-queue-artist" }, item.artist) : null
+          h("span", { className: "dmo-queue-title" }, item.title),
+          item.artist ? h("span", { className: "dmo-queue-artist" }, item.artist) : null
         ),
-        badge ? h2("span", { className: "dmo-queue-badge" }, badge) : null,
-        item.unavailableReason ? h2("span", { className: "dmo-queue-badge dmo-queue-badge-warn" }, "不可用") : null,
-        item.duration !== null ? h2("span", { className: "dmo-queue-dur" }, formatTime(item.duration)) : null
+        badge ? h("span", { className: "dmo-queue-badge" }, badge) : null,
+        item.unavailableReason ? h("span", { className: "dmo-queue-badge dmo-queue-badge-warn" }, "不可用") : null,
+        item.duration !== null ? h("span", { className: "dmo-queue-dur" }, formatTime(item.duration)) : null
       ),
-      h2(
+      h(
         "button",
         {
           type: "button",
@@ -8112,13 +7120,13 @@ var __dshMusicOnImpl__ = (() => {
     );
   }
   function ExternalStage({ track, degraded }) {
-    return h2(
+    return h(
       "div",
       { className: "dmo-stage dmo-stage-external" },
-      h2(
+      h(
         "div",
         { className: "dmo-embed-frame" },
-        h2("iframe", {
+        h("iframe", {
           src: track.embedUrl,
           title: track.title,
           allow: "autoplay; fullscreen; picture-in-picture",
@@ -8128,7 +7136,7 @@ var __dshMusicOnImpl__ = (() => {
           referrerPolicy: "no-referrer-when-downgrade"
         })
       ),
-      h2(
+      h(
         "p",
         { className: "dmo-embed-note" },
         degraded ? "音频流代理失败，已自动切到内嵌播放器。外部播放器，频谱不可用。" : "外部播放器，频谱不可用。进度与音量由播放器自身控制，本面板只负责切歌。"
@@ -8136,27 +7144,26 @@ var __dshMusicOnImpl__ = (() => {
     );
   }
   function EmptyStage({ dragging }) {
-    return h2(
+    return h(
       "div",
       { className: dragging ? "dmo-stage dmo-stage-empty dmo-stage-drag" : "dmo-stage dmo-stage-empty" },
-      h2("span", { className: "dmo-stage-glyph" }, "♫"),
-      h2("p", { className: "dmo-stage-title" }, "把音频文件拖到这里"),
-      h2("p", { className: "dmo-stage-hint" }, "支持 mp3 / m4a / wav / flac / ogg，可一次拖入多首；也接受 B 站播放页链接。")
+      h("span", { className: "dmo-stage-glyph" }, "♫"),
+      h("p", { className: "dmo-stage-title" }, "把音频文件拖到这里"),
+      h("p", { className: "dmo-stage-hint" }, "支持 mp3 / m4a / wav / flac / ogg，可一次拖入多首；也接受 B 站播放页链接。")
     );
   }
   function PlayerPanel(props) {
     const engine = props && props.engine ? props.engine : null;
     const settings = props && props.settings || {};
-    const presets = props && props.presets || null;
-    const [state, setState] = (0, import_react2.useState)(() => engine ? engine.getState() : { status: "idle", mode: "internal" });
-    const [queue, setQueue] = (0, import_react2.useState)(() => engine ? engine.getQueue() : []);
-    const [dragDepth, setDragDepth] = (0, import_react2.useState)(0);
-    const [notice, setNotice] = (0, import_react2.useState)("");
-    const [scrubbing, setScrubbing] = (0, import_react2.useState)(false);
-    const [scrubValue, setScrubValue] = (0, import_react2.useState)(0);
-    const rootRef = (0, import_react2.useRef)(null);
-    const rangeRef = (0, import_react2.useRef)(null);
-    (0, import_react2.useEffect)(() => {
+    const [state, setState] = (0, import_react.useState)(() => engine ? engine.getState() : { status: "idle", mode: "internal" });
+    const [queue, setQueue] = (0, import_react.useState)(() => engine ? engine.getQueue() : []);
+    const [dragDepth, setDragDepth] = (0, import_react.useState)(0);
+    const [notice, setNotice] = (0, import_react.useState)("");
+    const [scrubbing, setScrubbing] = (0, import_react.useState)(false);
+    const [scrubValue, setScrubValue] = (0, import_react.useState)(0);
+    const rootRef = (0, import_react.useRef)(null);
+    const rangeRef = (0, import_react.useRef)(null);
+    (0, import_react.useEffect)(() => {
       if (engine === null) return void 0;
       setState(engine.getState());
       const offState = engine.onStateChange((next) => setState(next));
@@ -8179,17 +7186,17 @@ var __dshMusicOnImpl__ = (() => {
         offError();
       };
     }, [engine]);
-    (0, import_react2.useEffect)(() => {
+    (0, import_react.useEffect)(() => {
       if (engine === null) return;
       if (typeof settings.volume === "number") engine.setVolume(settings.volume);
       if (typeof settings.loopMode === "string") engine.setLoopMode(settings.loopMode);
     }, [engine]);
-    (0, import_react2.useEffect)(() => {
+    (0, import_react.useEffect)(() => {
       if (notice === "") return void 0;
       const timer = setTimeout(() => setNotice(""), 4e3);
       return () => clearTimeout(timer);
     }, [notice]);
-    (0, import_react2.useEffect)(() => {
+    (0, import_react.useEffect)(() => {
       const onDragOver = (event) => {
         if (event.dataTransfer && Array.from(event.dataTransfer.types || []).includes("Files")) {
           event.preventDefault();
@@ -8208,7 +7215,7 @@ var __dshMusicOnImpl__ = (() => {
         window.removeEventListener("drop", onDrop);
       };
     }, []);
-    const ingestFiles = (0, import_react2.useCallback)(
+    const ingestFiles = (0, import_react.useCallback)(
       async (fileList) => {
         if (engine === null) return;
         const result = await engine.addFiles(fileList, { playFirst: true });
@@ -8220,7 +7227,7 @@ var __dshMusicOnImpl__ = (() => {
       },
       [engine]
     );
-    const ingestText = (0, import_react2.useCallback)(
+    const ingestText = (0, import_react.useCallback)(
       async (text) => {
         if (engine === null) return false;
         const raw = typeof text === "string" ? text.trim() : "";
@@ -8240,19 +7247,19 @@ var __dshMusicOnImpl__ = (() => {
       },
       [engine]
     );
-    const onDragEnter = (0, import_react2.useCallback)((event) => {
+    const onDragEnter = (0, import_react.useCallback)((event) => {
       event.preventDefault();
       setDragDepth((depth) => depth + 1);
     }, []);
-    const onDragLeave = (0, import_react2.useCallback)((event) => {
+    const onDragLeave = (0, import_react.useCallback)((event) => {
       event.preventDefault();
       setDragDepth((depth) => Math.max(0, depth - 1));
     }, []);
-    const onDragOverZone = (0, import_react2.useCallback)((event) => {
+    const onDragOverZone = (0, import_react.useCallback)((event) => {
       event.preventDefault();
       if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
     }, []);
-    const onDropZone = (0, import_react2.useCallback)(
+    const onDropZone = (0, import_react.useCallback)(
       (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -8277,27 +7284,27 @@ var __dshMusicOnImpl__ = (() => {
     const seekable = isExternal === false && state.seekable !== false;
     const duration = state.duration !== null && Number.isFinite(state.duration) ? state.duration : 0;
     const timeShown = scrubbing ? scrubValue : state.currentTime || 0;
-    const onToggle = (0, import_react2.useCallback)(() => {
+    const onToggle = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       void engine.toggle();
     }, [engine]);
-    const onPrev = (0, import_react2.useCallback)(() => {
+    const onPrev = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       void engine.prev();
     }, [engine]);
-    const onNext = (0, import_react2.useCallback)(() => {
+    const onNext = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       void engine.next();
     }, [engine]);
-    const onSeekStart = (0, import_react2.useCallback)(() => {
+    const onSeekStart = (0, import_react.useCallback)(() => {
       setScrubbing(true);
       setScrubValue(state.currentTime || 0);
     }, [state.currentTime]);
-    const onSeekInput = (0, import_react2.useCallback)((event) => {
+    const onSeekInput = (0, import_react.useCallback)((event) => {
       const value = Number(event.target.value);
       setScrubValue(Number.isFinite(value) ? value : 0);
     }, []);
-    const onSeekCommit = (0, import_react2.useCallback)(
+    const onSeekCommit = (0, import_react.useCallback)(
       (event) => {
         if (engine === null) return;
         const value = Number(event.target.value);
@@ -8306,7 +7313,7 @@ var __dshMusicOnImpl__ = (() => {
       },
       [engine]
     );
-    const onVolume = (0, import_react2.useCallback)(
+    const onVolume = (0, import_react.useCallback)(
       (event) => {
         if (engine === null) return;
         const value = Number(event.target.value);
@@ -8316,34 +7323,34 @@ var __dshMusicOnImpl__ = (() => {
       },
       [engine, state.muted]
     );
-    const onMute = (0, import_react2.useCallback)(() => {
+    const onMute = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       engine.setMuted(state.muted !== true);
     }, [engine, state.muted]);
-    const onLoop = (0, import_react2.useCallback)(() => {
+    const onLoop = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       engine.cycleLoopMode();
     }, [engine]);
-    const onClear = (0, import_react2.useCallback)(() => {
+    const onClear = (0, import_react.useCallback)(() => {
       if (engine === null) return;
       engine.clear();
       setNotice("队列已清空");
     }, [engine]);
-    const onSelect = (0, import_react2.useCallback)(
+    const onSelect = (0, import_react.useCallback)(
       (index) => {
         if (engine === null) return;
         void engine.loadAt(index, { autoplay: true });
       },
       [engine]
     );
-    const onRemove = (0, import_react2.useCallback)(
+    const onRemove = (0, import_react.useCallback)(
       (index) => {
         if (engine === null) return;
         engine.remove(index);
       },
       [engine]
     );
-    const onKeyDown = (0, import_react2.useCallback)(
+    const onKeyDown = (0, import_react.useCallback)(
       (event) => {
         const tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
         if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button") return;
@@ -8364,7 +7371,7 @@ var __dshMusicOnImpl__ = (() => {
       },
       [onNext, onPrev, onToggle]
     );
-    const volumeValue = (0, import_react2.useMemo)(() => {
+    const volumeValue = (0, import_react.useMemo)(() => {
       const value = typeof state.volume === "number" ? state.volume : 0.6;
       return Math.round(value * 100);
     }, [state.volume]);
@@ -8372,7 +7379,7 @@ var __dshMusicOnImpl__ = (() => {
     const progressPercent = progressMax > 0 ? Math.min(100, Math.max(0, timeShown / progressMax * 100)) : 0;
     const loopMode = state.loopMode || "all";
     const dragging = dragDepth > 0;
-    return h2(
+    return h(
       "div",
       {
         className: dragging ? "dmo-panel dmo-panel-drag" : "dmo-panel",
@@ -8386,20 +7393,20 @@ var __dshMusicOnImpl__ = (() => {
         onDragOver: onDragOverZone,
         onDrop: onDropZone
       },
-      h2(
+      h(
         "div",
         { className: "dmo-panel-head" },
-        h2(
+        h(
           "div",
           { className: "dmo-now" },
-          h2("span", { className: "dmo-now-title", title: current ? current.title : "" }, current ? current.title : "未在播放"),
-          current && current.artist ? h2("span", { className: "dmo-now-artist" }, current.artist) : null,
-          current && current.unavailableReason ? h2("span", { className: "dmo-now-warn" }, current.unavailableReason) : null
+          h("span", { className: "dmo-now-title", title: current ? current.title : "" }, current ? current.title : "未在播放"),
+          current && current.artist ? h("span", { className: "dmo-now-artist" }, current.artist) : null,
+          current && current.unavailableReason ? h("span", { className: "dmo-now-warn" }, current.unavailableReason) : null
         ),
-        h2(
+        h(
           "div",
           { className: "dmo-head-actions" },
-          h2(
+          h(
             "button",
             {
               type: "button",
@@ -8412,31 +7419,31 @@ var __dshMusicOnImpl__ = (() => {
           )
         )
       ),
-      dragging ? h2(
+      dragging ? h(
         "div",
         { className: "dmo-drop-hint" },
-        h2("span", { className: "dmo-drop-glyph" }, "⬇"),
-        h2("span", null, "松手加入队列")
+        h("span", { className: "dmo-drop-glyph" }, "⬇"),
+        h("span", null, "松手加入队列")
       ) : null,
       // 降级路径：current 仍是 url-audio 的 kind，但 state.mode 已是 external，
       // 此时同样要挂 iframe（embedUrl 来自 track 本身）。
-      isExternal && current && current.embedUrl ? h2(ExternalStage, { track: current, degraded: state.degraded === true }) : queue.length === 0 ? h2(EmptyStage, { dragging }) : h2(
+      isExternal && current && current.embedUrl ? h(ExternalStage, { track: current, degraded: state.degraded === true }) : queue.length === 0 ? h(EmptyStage, { dragging }) : h(
         "div",
         { className: "dmo-stage" },
-        h2("span", { className: "dmo-stage-glyph dmo-stage-glyph-live" }, isPlaying ? "♫" : "♪"),
-        h2("span", { className: "dmo-stage-meta" }, `${queue.length} 首在队列中`),
-        state.autoplayBlocked ? h2("span", { className: "dmo-stage-warn" }, "浏览器拦下了自动播放，点播放按钮即可") : null
+        h("span", { className: "dmo-stage-glyph dmo-stage-glyph-live" }, isPlaying ? "♫" : "♪"),
+        h("span", { className: "dmo-stage-meta" }, `${queue.length} 首在队列中`),
+        state.autoplayBlocked ? h("span", { className: "dmo-stage-warn" }, "浏览器拦下了自动播放，点播放按钮即可") : null
       ),
       /* 进度条：外部模式 / 无时长时禁用，并显示不确定态。 */
-      h2(
+      h(
         "div",
         { className: "dmo-progress" },
-        h2("span", { className: "dmo-progress-time" }, formatTime(timeShown)),
-        h2(
+        h("span", { className: "dmo-progress-time" }, formatTime(timeShown)),
+        h(
           "div",
           { className: seekable && progressMax > 0 ? "dmo-progress-track" : "dmo-progress-track dmo-progress-indeterminate" },
-          h2("span", { className: "dmo-progress-fill", style: { width: `${progressPercent}%` } }),
-          h2("input", {
+          h("span", { className: "dmo-progress-fill", style: { width: `${progressPercent}%` } }),
+          h("input", {
             ref: rangeRef,
             type: "range",
             className: "dmo-progress-range",
@@ -8452,21 +7459,21 @@ var __dshMusicOnImpl__ = (() => {
             "aria-label": "播放进度"
           })
         ),
-        h2(
+        h(
           "span",
           { className: "dmo-progress-time" },
           isExternal ? "∞" : formatTime(progressMax > 0 ? progressMax : null)
         )
       ),
-      h2(
+      h(
         "div",
         { className: "dmo-controls" },
-        h2(
+        h(
           "button",
           { type: "button", className: "dmo-btn dmo-btn-icon", onClick: onPrev, title: "上一首", "aria-label": "上一首" },
           "⏮"
         ),
-        h2(
+        h(
           "button",
           {
             type: "button",
@@ -8477,12 +7484,12 @@ var __dshMusicOnImpl__ = (() => {
           },
           isPlaying ? "⏸" : "▶"
         ),
-        h2(
+        h(
           "button",
           { type: "button", className: "dmo-btn dmo-btn-icon", onClick: onNext, title: "下一首", "aria-label": "下一首" },
           "⏭"
         ),
-        h2(
+        h(
           "button",
           {
             type: "button",
@@ -8493,10 +7500,10 @@ var __dshMusicOnImpl__ = (() => {
           },
           LOOP_GLYPH[loopMode] || LOOP_GLYPH.all
         ),
-        h2(
+        h(
           "div",
           { className: "dmo-volume" },
-          h2(
+          h(
             "button",
             {
               type: "button",
@@ -8507,7 +7514,7 @@ var __dshMusicOnImpl__ = (() => {
             },
             state.muted ? "🔇" : "🔊"
           ),
-          h2("input", {
+          h("input", {
             type: "range",
             className: "dmo-range dmo-volume-range",
             min: 0,
@@ -8519,33 +7526,32 @@ var __dshMusicOnImpl__ = (() => {
           })
         )
       ),
-      queue.length > 0 ? h2(
+      queue.length > 0 ? h(
         "ul",
         { className: "dmo-queue" },
         queue.map(
-          (item) => h2(QueueRow, { key: item.id, item, onSelect, onRemove })
+          (item) => h(QueueRow, { key: item.id, item, onSelect, onRemove })
         )
       ) : null,
-      /* 音景分区常驻面板底部：队列为空时它就是唯一入口，所以不能藏进折叠区之外。 */
-      h2(PresetsSection, { presets, onNotice: setNotice }),
-      notice !== "" ? h2("div", { className: "dmo-notice", role: "status" }, notice) : null
+      /* 面板底部不再挂任何预置分区，只保留播放器本体。 */
+      notice !== "" ? h("div", { className: "dmo-notice", role: "status" }, notice) : null
     );
   }
   var PlayerPanel_default = PlayerPanel;
 
   // src/client/ui/Spectrum.jsx
-  var import_react3 = __require("react");
+  var import_react2 = __require("react");
   var FFT_SIZE = 2048;
   var PEAK_DECAY_PER_FRAME = 0.6;
   var REF_FRAME_MS = 1e3 / 60;
   var REDUCED_MOTION_FPS = 10;
   var MAX_DPR = 2;
   var ANALYSER_PROBE_MS = 500;
-  var STYLE_VALUES = ["dots", "bars", "line", "wave", "off"];
+  var STYLE_VALUES = ["dots", "bars", "line", "wave", "blocks", "mirror", "off"];
   var DEFAULT_STYLE = "dots";
   var DEFAULT_BAR_COUNT = 48;
   var BAR_COUNT_MIN = 16;
-  var BAR_COUNT_MAX = 96;
+  var BAR_COUNT_MAX = 160;
   var BAR_COUNT_STEP = 8;
   var GAIN_MIN = 0.5;
   var GAIN_MAX = 4;
@@ -8555,10 +7561,8 @@ var __dshMusicOnImpl__ = (() => {
   var GLOW_BLUR = { off: 0, soft: 6, strong: 12 };
   var GLOW_STRONG_COLOR = "rgba(120,190,255,0.85)";
   var DOT_W_MIN = 2;
-  var DOT_W_MAX = 4;
-  var DOT_GAP_TARGET = 1.75;
-  var DOT_GAP_MIN = 1.5;
-  var DOT_GAP_MAX = 2;
+  var DOT_W_MAX = 16;
+  var DOT_W_RATIO = 0.5;
   var DOT_GAP_FLOOR = 0.5;
   var FLOOR_H = 2;
   var PEAK_H = 2;
@@ -8683,16 +7687,15 @@ var __dshMusicOnImpl__ = (() => {
     const n = Math.max(1, Math.round(count) || 1);
     const w = Math.max(1, Number(width) || 1);
     const slot = w / n;
-    let barW = Math.min(DOT_W_MAX, Math.max(DOT_W_MIN, slot - DOT_GAP_TARGET));
-    let gap = slot - barW;
-    if (gap > DOT_GAP_MAX) gap = DOT_GAP_MAX;
-    if (gap < DOT_GAP_MIN) {
-      gap = Math.max(DOT_GAP_FLOOR, Math.min(DOT_GAP_MIN, slot - DOT_W_MIN));
-      barW = Math.min(DOT_W_MAX, Math.max(1, slot - gap));
+    let barW = Math.min(DOT_W_MAX, Math.max(DOT_W_MIN, slot * DOT_W_RATIO));
+    let gap = n === 1 ? 0 : (w - barW * n) / (n - 1);
+    if (gap < DOT_GAP_FLOOR) {
+      gap = DOT_GAP_FLOOR;
+      barW = n === 1 ? w : Math.max(1, (w - gap * (n - 1)) / n);
     }
     const step = barW + gap;
     const total = step * (n - 1) + barW;
-    return { barW, gap, step, slot, x0: Math.max(0, (w - total) / 2), total };
+    return { barW, gap, step, slot, x0: 0, total };
   }
   function Spectrum(props) {
     const { engine, settings } = props || {};
@@ -8706,16 +7709,16 @@ var __dshMusicOnImpl__ = (() => {
       if (state === null) return true;
       return state.mode !== "external";
     })();
-    const canvasRef = (0, import_react3.useRef)(null);
-    const hostRef = (0, import_react3.useRef)(null);
-    const rafRef = (0, import_react3.useRef)(0);
-    const geometryRef = (0, import_react3.useRef)({ width: 0, height: 0, dpr: 1 });
-    const peaksRef = (0, import_react3.useRef)(null);
-    const bandsRef = (0, import_react3.useRef)(null);
-    const edgesRef = (0, import_react3.useRef)(null);
-    const visibleRef = (0, import_react3.useRef)(true);
-    const externalRef = (0, import_react3.useRef)(initialSpectrumAvailable === false);
-    (0, import_react3.useEffect)(() => {
+    const canvasRef = (0, import_react2.useRef)(null);
+    const hostRef = (0, import_react2.useRef)(null);
+    const rafRef = (0, import_react2.useRef)(0);
+    const geometryRef = (0, import_react2.useRef)({ width: 0, height: 0, dpr: 1 });
+    const peaksRef = (0, import_react2.useRef)(null);
+    const bandsRef = (0, import_react2.useRef)(null);
+    const edgesRef = (0, import_react2.useRef)(null);
+    const visibleRef = (0, import_react2.useRef)(true);
+    const externalRef = (0, import_react2.useRef)(initialSpectrumAvailable === false);
+    (0, import_react2.useEffect)(() => {
       if (style === "off") return void 0;
       const canvas = canvasRef.current;
       if (canvas === null || canvas === void 0) return void 0;
@@ -8939,6 +7942,79 @@ var __dshMusicOnImpl__ = (() => {
         ctx2d.lineJoin = "round";
         ctx2d.stroke();
       }
+      function drawBlocks(colors) {
+        const { width, height } = geometryRef.current;
+        const layout = dotLayout(width, barCount);
+        const { barW, step: step2, x0 } = layout;
+        const radius = Math.min(barW / 2, 2);
+        const { blur, color: glowColor } = glowParams(colors);
+        const bands = bandsRef.current;
+        const cellH = 4;
+        const cellGap = 2;
+        const pitchY = cellH + cellGap;
+        const maxCells = Math.max(1, Math.floor(height / pitchY));
+        const gradient = ctx2d.createLinearGradient(0, height, 0, 0);
+        gradient.addColorStop(0, colors.low);
+        gradient.addColorStop(1, colors.high);
+        for (let i = 0; i < barCount; i += 1) {
+          const x = x0 + i * step2;
+          const lit = Math.min(maxCells, Math.round(bands[i] * maxCells));
+          const peakCell = Math.min(maxCells, Math.round(peaksRef.current[i] * maxCells));
+          for (let c = 0; c < Math.min(3, maxCells - lit); c += 1) {
+            ctx2d.fillStyle = colors.base;
+            roundRect(ctx2d, x, height - (c + 1) * pitchY + cellGap, barW, cellH, radius);
+            ctx2d.fill();
+          }
+          for (let c = 0; c < lit; c += 1) {
+            if (blur > 0) {
+              ctx2d.shadowBlur = blur;
+              ctx2d.shadowColor = glowColor;
+            }
+            ctx2d.fillStyle = gradient;
+            roundRect(ctx2d, x, height - (c + 1) * pitchY + cellGap, barW, cellH, radius);
+            ctx2d.fill();
+            if (blur > 0) {
+              ctx2d.shadowBlur = 0;
+              ctx2d.shadowColor = "transparent";
+            }
+          }
+          if (peakCell > lit && peakCell <= maxCells) {
+            ctx2d.fillStyle = colors.high;
+            roundRect(ctx2d, x, height - peakCell * pitchY + cellGap, barW, cellH, radius);
+            ctx2d.fill();
+          }
+        }
+        ctx2d.shadowBlur = 0;
+      }
+      function drawMirror(colors) {
+        const { width, height } = geometryRef.current;
+        const layout = dotLayout(width, barCount);
+        const { barW, step: step2, x0 } = layout;
+        const radius = barW / 2;
+        const { blur, color: glowColor } = glowParams(colors);
+        const center = height / 2;
+        const bands = bandsRef.current;
+        const gradient = ctx2d.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, colors.high);
+        gradient.addColorStop(0.5, colors.low);
+        gradient.addColorStop(1, colors.high);
+        for (let i = 0; i < barCount; i += 1) {
+          const x = x0 + i * step2;
+          const half = Math.min(center, Math.max(1, bands[i] * center));
+          if (blur > 0) {
+            ctx2d.shadowBlur = blur;
+            ctx2d.shadowColor = glowColor;
+          }
+          ctx2d.fillStyle = gradient;
+          roundRect(ctx2d, x, center - half, barW, half * 2, radius);
+          ctx2d.fill();
+          if (blur > 0) {
+            ctx2d.shadowBlur = 0;
+            ctx2d.shadowColor = "transparent";
+          }
+        }
+        ctx2d.shadowBlur = 0;
+      }
       function step(now, prevTs2) {
         const { width, height } = geometryRef.current;
         const nowTs = typeof now === "number" ? now : performance.now();
@@ -8985,6 +8061,8 @@ var __dshMusicOnImpl__ = (() => {
         ctx2d.clearRect(0, 0, width, height);
         const colors = palette();
         if (style === "dots") drawDots(colors);
+        else if (style === "blocks") drawBlocks(colors);
+        else if (style === "mirror") drawMirror(colors);
         else if (style === "wave") drawWave(colors);
         else if (style === "line") drawLine(colors);
         else drawBars(colors);
@@ -9117,7 +8195,7 @@ var __dshMusicOnImpl__ = (() => {
       return null;
     }
     const children = [
-      (0, import_react3.createElement)("canvas", {
+      (0, import_react2.createElement)("canvas", {
         key: "canvas",
         ref: canvasRef,
         className: "dmo-spectrum-canvas",
@@ -9126,14 +8204,14 @@ var __dshMusicOnImpl__ = (() => {
     ];
     if (initialSpectrumAvailable === false) {
       children.push(
-        (0, import_react3.createElement)(
+        (0, import_react2.createElement)(
           "span",
           { key: "badge", className: "dmo-spectrum-badge" },
           "外部播放器 · 无频谱"
         )
       );
     }
-    return (0, import_react3.createElement)(
+    return (0, import_react2.createElement)(
       "div",
       {
         ref: hostRef,
@@ -9150,10 +8228,10 @@ var __dshMusicOnImpl__ = (() => {
   var Spectrum_default = Spectrum;
 
   // src/client/ui/Settings.jsx
-  var import_react5 = __require("react");
+  var import_react4 = __require("react");
 
   // src/client/ui/LibrarySection.jsx
-  var import_react4 = __require("react");
+  var import_react3 = __require("react");
   var COLLAPSE_KEY2 = "dsh-music-on:lib.collapsed";
   var STATUS_MS = 4e3;
   function readCollapsed() {
@@ -9193,30 +8271,30 @@ var __dshMusicOnImpl__ = (() => {
   function LibrarySection(props) {
     const { t, engine } = props || {};
     const tr = typeof t === "function" ? t : (key, fallback) => fallback !== void 0 ? fallback : key;
-    const [favorites, setFavorites] = (0, import_react4.useState)(() => loadFavorites());
-    const [history, setHistory] = (0, import_react4.useState)(() => loadHistory());
-    const [folded, setFolded] = (0, import_react4.useState)(() => readCollapsed());
-    const [status, setStatus] = (0, import_react4.useState)("");
-    const [busy, setBusy] = (0, import_react4.useState)(false);
-    (0, import_react4.useEffect)(
+    const [favorites, setFavorites] = (0, import_react3.useState)(() => loadFavorites());
+    const [history, setHistory] = (0, import_react3.useState)(() => loadHistory());
+    const [folded, setFolded] = (0, import_react3.useState)(() => readCollapsed());
+    const [status, setStatus] = (0, import_react3.useState)("");
+    const [busy, setBusy] = (0, import_react3.useState)(false);
+    (0, import_react3.useEffect)(
       () => subscribeLibrary(() => {
         setFavorites(loadFavorites());
         setHistory(loadHistory());
       }),
       []
     );
-    (0, import_react4.useEffect)(() => {
+    (0, import_react3.useEffect)(() => {
       if (!status) return void 0;
       const timer = setTimeout(() => setStatus(""), STATUS_MS);
       return () => clearTimeout(timer);
     }, [status]);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react3.useEffect)(() => {
       writeCollapsed(folded);
     }, [folded]);
-    const toggleFold = (0, import_react4.useCallback)((which) => {
+    const toggleFold = (0, import_react3.useCallback)((which) => {
       setFolded((prev) => ({ ...prev, [which]: !prev[which] }));
     }, []);
-    const play = (0, import_react4.useCallback)(
+    const play = (0, import_react3.useCallback)(
       (entry) => {
         if (!engine || typeof engine.addUrl !== "function") {
           setStatus(tr("lib.noEngine", "播放器还没就绪，稍后再点"));
@@ -9237,28 +8315,28 @@ var __dshMusicOnImpl__ = (() => {
       },
       [engine, tr]
     );
-    const dropFavorite = (0, import_react4.useCallback)((entry) => {
+    const dropFavorite = (0, import_react3.useCallback)((entry) => {
       removeFavorite(entry.id);
     }, []);
-    const dropHistory = (0, import_react4.useCallback)((entry) => {
+    const dropHistory = (0, import_react3.useCallback)((entry) => {
       removeHistory(entry.id);
     }, []);
-    const wipeFavorites = (0, import_react4.useCallback)(() => {
+    const wipeFavorites = (0, import_react3.useCallback)(() => {
       clearFavorites();
       setStatus(tr("lib.favCleared", "收藏已清空"));
     }, [tr]);
-    const wipeHistory = (0, import_react4.useCallback)(() => {
+    const wipeHistory = (0, import_react3.useCallback)(() => {
       clearHistory();
       setStatus(tr("lib.histCleared", "历史已清空"));
     }, [tr]);
     function table(id, title, help, list, onDrop, onWipe, empty) {
       const isFolded = folded[id] === true;
-      const head = (0, import_react4.createElement)(
+      const head = (0, import_react3.createElement)(
         "div",
         { className: "dmo-lib-head" },
-        (0, import_react4.createElement)("span", { className: "dmo-lib-title" }, title),
-        (0, import_react4.createElement)("span", { className: "dmo-lib-count" }, String(list.length)),
-        (0, import_react4.createElement)(
+        (0, import_react3.createElement)("span", { className: "dmo-lib-title" }, title),
+        (0, import_react3.createElement)("span", { className: "dmo-lib-count" }, String(list.length)),
+        (0, import_react3.createElement)(
           "button",
           {
             type: "button",
@@ -9269,7 +8347,7 @@ var __dshMusicOnImpl__ = (() => {
           },
           isFolded ? "▸" : "▾"
         ),
-        list.length > 0 ? (0, import_react4.createElement)(
+        list.length > 0 ? (0, import_react3.createElement)(
           "button",
           {
             type: "button",
@@ -9281,25 +8359,25 @@ var __dshMusicOnImpl__ = (() => {
         ) : null
       );
       const rows = list.map(
-        (entry) => (0, import_react4.createElement)(
+        (entry) => (0, import_react3.createElement)(
           "div",
           { key: entry.id, className: "dmo-lib-row", title: entry.url },
-          (0, import_react4.createElement)("span", { className: `dmo-lib-chip dmo-lib-chip--${entry.platform || "other"}` }, platformLabel(entry.platform)),
-          (0, import_react4.createElement)(
+          (0, import_react3.createElement)("span", { className: `dmo-lib-chip dmo-lib-chip--${entry.platform || "other"}` }, platformLabel(entry.platform)),
+          (0, import_react3.createElement)(
             "span",
             { className: "dmo-lib-main" },
-            (0, import_react4.createElement)("span", { className: "dmo-lib-name" }, entryName(entry)),
-            (0, import_react4.createElement)(
+            (0, import_react3.createElement)("span", { className: "dmo-lib-name" }, entryName(entry)),
+            (0, import_react3.createElement)(
               "span",
               { className: "dmo-lib-meta" },
               relativeTime(entry.playedAt || entry.addedAt),
               playsLabel(entry, tr) === "" ? null : ` · ${playsLabel(entry, tr)}`
             )
           ),
-          (0, import_react4.createElement)(
+          (0, import_react3.createElement)(
             "span",
             { className: "dmo-lib-actions" },
-            (0, import_react4.createElement)(
+            (0, import_react3.createElement)(
               "button",
               {
                 type: "button",
@@ -9311,7 +8389,7 @@ var __dshMusicOnImpl__ = (() => {
               },
               "▶"
             ),
-            (0, import_react4.createElement)(
+            (0, import_react3.createElement)(
               "button",
               {
                 type: "button",
@@ -9325,15 +8403,15 @@ var __dshMusicOnImpl__ = (() => {
           )
         )
       );
-      return (0, import_react4.createElement)(
+      return (0, import_react3.createElement)(
         "section",
         { key: id, className: "dmo-lib-group", "data-group": id },
         head,
-        help ? (0, import_react4.createElement)("div", { className: "dmo-lib-help" }, help) : null,
-        isFolded ? null : rows.length > 0 ? (0, import_react4.createElement)("div", { className: "dmo-lib-list" }, rows) : (0, import_react4.createElement)("div", { className: "dmo-lib-empty" }, empty)
+        help ? (0, import_react3.createElement)("div", { className: "dmo-lib-help" }, help) : null,
+        isFolded ? null : rows.length > 0 ? (0, import_react3.createElement)("div", { className: "dmo-lib-list" }, rows) : (0, import_react3.createElement)("div", { className: "dmo-lib-empty" }, empty)
       );
     }
-    return (0, import_react4.createElement)(
+    return (0, import_react3.createElement)(
       "div",
       { className: "dmo-lib", "data-plugin": "dsh-music-on" },
       table(
@@ -9354,7 +8432,7 @@ var __dshMusicOnImpl__ = (() => {
         wipeHistory,
         tr("lib.histEmpty", "还没有历史。粘贴过的链接会自动记在这里。")
       ),
-      status ? (0, import_react4.createElement)("div", { className: "dmo-lib-status" }, status) : null
+      status ? (0, import_react3.createElement)("div", { className: "dmo-lib-status" }, status) : null
     );
   }
   var LibrarySection_default = LibrarySection;
@@ -9362,27 +8440,27 @@ var __dshMusicOnImpl__ = (() => {
   // src/client/ui/Settings.jsx
   function textBlock(label, help, keyPrefix) {
     const parts = [
-      (0, import_react5.createElement)("span", { key: `${keyPrefix}-label`, className: "dmo-setting-label" }, label)
+      (0, import_react4.createElement)("span", { key: `${keyPrefix}-label`, className: "dmo-setting-label" }, label)
     ];
     if (help) {
-      parts.push((0, import_react5.createElement)("span", { key: `${keyPrefix}-help`, className: "dmo-setting-help" }, help));
+      parts.push((0, import_react4.createElement)("span", { key: `${keyPrefix}-help`, className: "dmo-setting-help" }, help));
     }
-    return (0, import_react5.createElement)("span", { key: `${keyPrefix}-text`, className: "dmo-setting-text" }, parts);
+    return (0, import_react4.createElement)("span", { key: `${keyPrefix}-text`, className: "dmo-setting-text" }, parts);
   }
   function Settings(props) {
     const { settings, onChange, engine, t } = props || {};
-    const fallbackStore = (0, import_react5.useMemo)(() => createSettingsStore(), []);
-    const fallbackSettings = useSettings({ useState: import_react5.useState, useEffect: import_react5.useEffect }, fallbackStore);
+    const fallbackStore = (0, import_react4.useMemo)(() => createSettingsStore(), []);
+    const fallbackSettings = useSettings({ useState: import_react4.useState, useEffect: import_react4.useEffect }, fallbackStore);
     const current = settings || fallbackSettings;
-    const [status, setStatus] = (0, import_react5.useState)("");
-    const [busy, setBusy] = (0, import_react5.useState)(false);
-    const [cacheInfo, setCacheInfo] = (0, import_react5.useState)(null);
-    (0, import_react5.useEffect)(() => {
+    const theme = current.theme || "whale";
+    const [status, setStatus] = (0, import_react4.useState)("");
+    const [busy, setBusy] = (0, import_react4.useState)(false);
+    (0, import_react4.useEffect)(() => {
       if (!status) return void 0;
       const timer = setTimeout(() => setStatus(""), 2e3);
       return () => clearTimeout(timer);
     }, [status]);
-    (0, import_react5.useEffect)(
+    (0, import_react4.useEffect)(
       () => () => {
         fallbackStore.dispose();
       },
@@ -9396,58 +8474,6 @@ var __dshMusicOnImpl__ = (() => {
       fallbackStore.patch(key, value);
       setStatus("已保存到本机");
     }
-    function measureCache() {
-      setBusy(true);
-      const finish = (mb) => {
-        setCacheInfo({ mb });
-        setBusy(false);
-      };
-      try {
-        if (typeof navigator !== "undefined" && navigator.storage && typeof navigator.storage.estimate === "function") {
-          navigator.storage.estimate().then(
-            (estimate) => {
-              const bytes = estimate && typeof estimate.usage === "number" ? estimate.usage : 0;
-              finish(Math.round(bytes / (1024 * 1024) * 10) / 10);
-            },
-            () => finish(null)
-          );
-          return;
-        }
-        finish(null);
-      } catch (_error) {
-        finish(null);
-      }
-    }
-    function clearCache() {
-      setBusy(true);
-      let keys = [];
-      try {
-        if (typeof caches !== "undefined" && typeof caches.keys === "function") {
-          caches.keys().then((list) => {
-            keys = Array.isArray(list) ? list : [];
-            return Promise.all(
-              keys.map(
-                (key) => Promise.resolve().then(() => caches.delete(key)).catch(() => false)
-              )
-            );
-          }).then((results) => {
-            const cleared = results.filter(Boolean).length;
-            setStatus(cleared > 0 ? `已清空 ${cleared} 个缓存桶` : "缓存已是最新状态");
-          }).catch(() => {
-            setStatus("清空缓存失败，详见控制台");
-          }).then(() => {
-            setBusy(false);
-            setCacheInfo(null);
-          });
-          return;
-        }
-        setStatus("当前环境无缓存可清");
-      } catch (_error) {
-        setStatus("清空缓存失败，详见控制台");
-      }
-      setBusy(false);
-      setCacheInfo(null);
-    }
     function resetAll() {
       setBusy(true);
       const defaults = normalizeSettings(void 0);
@@ -9459,14 +8485,14 @@ var __dshMusicOnImpl__ = (() => {
       const value = current && current[spec.key] !== void 0 ? current[spec.key] : spec.default;
       const labelNode = textBlock(spec.label, spec.help, spec.key);
       if (spec.kind === "boolean") {
-        return (0, import_react5.createElement)(
+        return (0, import_react4.createElement)(
           "div",
           { key: spec.key, className: "dmo-setting-row" },
           labelNode,
-          (0, import_react5.createElement)(
+          (0, import_react4.createElement)(
             "span",
             { className: "dmo-setting-control" },
-            (0, import_react5.createElement)("input", {
+            (0, import_react4.createElement)("input", {
               type: "checkbox",
               className: "dmo-switch",
               role: "switch",
@@ -9480,16 +8506,16 @@ var __dshMusicOnImpl__ = (() => {
       }
       if (spec.kind === "select") {
         const options = spec.options.map(
-          (item) => (0, import_react5.createElement)("option", { key: String(item.value), value: String(item.value) }, item.label)
+          (item) => (0, import_react4.createElement)("option", { key: String(item.value), value: String(item.value) }, item.label)
         );
-        return (0, import_react5.createElement)(
+        return (0, import_react4.createElement)(
           "div",
           { key: spec.key, className: "dmo-setting-row" },
           labelNode,
-          (0, import_react5.createElement)(
+          (0, import_react4.createElement)(
             "span",
             { className: "dmo-setting-control" },
-            (0, import_react5.createElement)(
+            (0, import_react4.createElement)(
               "select",
               {
                 className: "dmo-select",
@@ -9508,14 +8534,14 @@ var __dshMusicOnImpl__ = (() => {
         );
       }
       const display = spec.key === "volume" ? `${Math.round(Number(value) * 100)}%` : String(value);
-      return (0, import_react5.createElement)(
+      return (0, import_react4.createElement)(
         "div",
         { key: spec.key, className: "dmo-setting-row" },
         labelNode,
-        (0, import_react5.createElement)(
+        (0, import_react4.createElement)(
           "span",
           { className: "dmo-setting-control" },
-          (0, import_react5.createElement)("input", {
+          (0, import_react4.createElement)("input", {
             type: "range",
             className: "dmo-range",
             min: spec.min,
@@ -9526,16 +8552,16 @@ var __dshMusicOnImpl__ = (() => {
             "aria-label": spec.label,
             onChange: (event) => emit3(spec.key, Number(event.target.value))
           }),
-          (0, import_react5.createElement)("span", { className: "dmo-range-value" }, display)
+          (0, import_react4.createElement)("span", { className: "dmo-range-value" }, display)
         )
       );
     });
     const GROUPS = [
       { id: "layout", title: "界面", keys: ["startCollapsed", "dockSize", "showTitles"] },
+      { id: "theme", title: "外观主题", keys: ["theme"] },
       { id: "playback", title: "播放", keys: ["volume", "loopMode", "allowAutoplay", "autoplayTarget", "crossfadeSec", "fadeOnPause", "rememberQueue"] },
       { id: "intake", title: "链接与歌单", keys: ["platformTrackLimit"] },
-      { id: "spectrum", title: "频谱", keys: ["spectrumStyle", "spectrumPlacement", "spectrumBars", "spectrumGain", "spectrumGlow", "spectrumHeight", "spectrumFps"] },
-      { id: "network", title: "网络与缓存", keys: ["proxyEnabled", "cacheLimitMB"] }
+      { id: "spectrum", title: "频谱", keys: ["spectrumStyle", "spectrumPlacement", "spectrumSpan", "spectrumBars", "spectrumGain", "spectrumGlow", "spectrumHeight", "spectrumFps", "spectrumDepth"] }
     ];
     const groupedKeys = new Set(GROUPS.reduce((all, group) => all.concat(group.keys), []));
     const ungrouped = SETTINGS_SCHEMA.map((spec) => spec.key).filter((key) => !groupedKeys.has(key));
@@ -9547,62 +8573,49 @@ var __dshMusicOnImpl__ = (() => {
     const groups = GROUPS.map((group) => {
       const children = group.keys.map((key) => byKey.get(key)).filter(Boolean);
       if (children.length === 0) return null;
-      return (0, import_react5.createElement)(
+      return (0, import_react4.createElement)(
         "section",
         { key: group.id, className: "dmo-settings-group", "data-group": group.id },
-        (0, import_react5.createElement)("div", { className: "dmo-settings-group-title" }, group.title),
+        (0, import_react4.createElement)("div", { className: "dmo-settings-group-title" }, group.title),
         children
       );
     }).filter(Boolean);
     const actions = [
-      (0, import_react5.createElement)(
-        "button",
-        { key: "measure", type: "button", className: "dmo-btn", onClick: measureCache, disabled: busy },
-        "查看缓存占用"
-      ),
-      (0, import_react5.createElement)(
-        "button",
-        { key: "clear", type: "button", className: "dmo-btn", onClick: clearCache, disabled: busy },
-        "清空缓存"
-      ),
-      (0, import_react5.createElement)(
+      (0, import_react4.createElement)(
         "button",
         { key: "reset", type: "button", className: "dmo-btn", onClick: resetAll, disabled: busy },
         "恢复默认值"
       )
     ];
-    if (cacheInfo) {
-      actions.push(
-        (0, import_react5.createElement)(
-          "span",
-          { key: "cacheinfo", className: "dmo-settings-meta" },
-          cacheInfo.mb === null ? "缓存占用不可读" : `当前占用 ${cacheInfo.mb} MB`
-        )
-      );
-    }
     if (status) {
-      actions.push((0, import_react5.createElement)("span", { key: "status", className: "dmo-settings-status" }, status));
+      actions.push((0, import_react4.createElement)("span", { key: "status", className: "dmo-settings-status" }, status));
     }
-    return (0, import_react5.createElement)(
+    return (0, import_react4.createElement)(
       "div",
-      { className: "dmo-settings", "data-plugin": "dsh-music-on" },
-      (0, import_react5.createElement)(
+      {
+        className: "dmo-settings",
+        "data-plugin": "dsh-music-on",
+        // 主题令牌作用域：设置分区不在 .dmo-dock-stack 里，必须自己挂一份，
+        // 否则用户切了主题、卡片变了色，设置页还是旧的蓝白。
+        "data-dmo-theme": theme
+      },
+      (0, import_react4.createElement)(
         "div",
         { className: "dmo-settings-head" },
-        (0, import_react5.createElement)("div", { className: "dmo-settings-title" }, "音景播放器"),
-        (0, import_react5.createElement)(
+        (0, import_react4.createElement)("div", { className: "dmo-settings-title" }, "音乐播放器"),
+        (0, import_react4.createElement)(
           "div",
           { className: "dmo-settings-sub" },
           "设置即时生效并持久化在 ",
-          (0, import_react5.createElement)("code", { className: "dmo-code" }, "dsh-music-on:settings"),
+          (0, import_react4.createElement)("code", { className: "dmo-code" }, "dsh-music-on:settings"),
           "，刷新后保留。"
         )
       ),
-      (0, import_react5.createElement)("div", { className: "dmo-settings-body" }, groups),
+      (0, import_react4.createElement)("div", { className: "dmo-settings-body" }, groups),
       // 收藏与历史放在设置项之后、操作按钮之前：它们是「我攒下来的链接」，
-      // 与上面那 19 项「播放器怎么表现」是两类东西，不该混进同一张表里。
-      (0, import_react5.createElement)(LibrarySection_default, { key: "library", engine, t }),
-      (0, import_react5.createElement)("div", { className: "dmo-settings-actions" }, actions)
+      // 与上面那些「播放器怎么表现」是两类东西，不该混进同一张表里。
+      (0, import_react4.createElement)(LibrarySection_default, { key: "library", engine, t }),
+      (0, import_react4.createElement)("div", { className: "dmo-settings-actions" }, actions)
     );
   }
   var Settings_default = Settings;
@@ -9639,60 +8652,49 @@ var __dshMusicOnImpl__ = (() => {
     throw new Error("[dsh-music-on] react 未就绪");
   }
   function ShellDockSeat(props) {
-    const React3 = reactRef();
+    const React2 = reactRef();
     const runtime = getRuntime();
     const t = props && props.t || fallbackTranslate;
-    const Dock = React3.useMemo(
-      () => createShellDock({ React: React3, engine: runtime.engine, store: runtime.store, t, Spectrum: Spectrum_default }),
-      [React3, t]
+    const Dock = React2.useMemo(
+      () => createShellDock({ React: React2, engine: runtime.engine, store: runtime.store, t, Spectrum: Spectrum_default }),
+      [React2, t]
     );
-    return React3.createElement(Dock, null);
+    return React2.createElement(Dock, null);
   }
   function MusicTabTitle(props) {
     const t = props && props.t || fallbackTranslate;
     return reactRef().createElement("span", { className: "dmo-tabtitle" }, t("tab.title", "音乐台"));
   }
   function MusicSeat(props) {
-    const React3 = reactRef();
+    const React2 = reactRef();
     const { store, engine, t } = props || {};
     const settings = useSettingsSnapshot(store);
-    const [presets, setPresets] = useStateSafe(() => getPresetsSync());
-    useEffectSafe(() => {
-      if (presets !== null) return void 0;
-      let alive = true;
-      ensurePresets({ store }).then((controller) => {
-        if (alive && controller) setPresets(controller);
-      });
-      return () => {
-        alive = false;
-      };
-    }, [presets, store]);
-    return React3.createElement(
+    return React2.createElement(
       "div",
       { className: "dmo-seat" },
-      React3.createElement(Spectrum_default, { engine, settings }),
-      React3.createElement(PlayerPanel_default, { engine, settings, presets, t })
+      React2.createElement(Spectrum_default, { engine, settings }),
+      React2.createElement(PlayerPanel_default, { engine, settings, t })
     );
   }
   function MusicSettingsSection(props) {
-    const React3 = reactRef();
+    const React2 = reactRef();
     const runtime = props && props.runtime || getRuntime();
     const t = props && props.t || fallbackTranslate;
     const settings = useSettingsSnapshot(runtime.store);
     const onChange = (key, value) => {
       runtime.store.patch(key, value);
     };
-    return React3.createElement(
+    return React2.createElement(
       getSettingsBoundary(),
       { t },
-      React3.createElement(Settings_default, { settings, onChange, engine: runtime.engine, t })
+      React2.createElement(Settings_default, { settings, onChange, engine: runtime.engine, t })
     );
   }
   var BoundaryComponent = null;
   function getSettingsBoundary() {
     if (BoundaryComponent !== null) return BoundaryComponent;
-    const React3 = reactRef();
-    const Base = React3 && React3.Component ? React3.Component : class {
+    const React2 = reactRef();
+    const Base = React2 && React2.Component ? React2.Component : class {
     };
     class SettingsBoundary extends Base {
       constructor(props) {
@@ -9711,16 +8713,16 @@ var __dshMusicOnImpl__ = (() => {
         const { error } = this.state;
         if (!error) return this.props.children;
         const t = this.props.t || fallbackTranslate;
-        return React3.createElement(
+        return React2.createElement(
           "div",
           { className: "dmo-settings dmo-settings--error" },
-          React3.createElement("div", { className: "dmo-settings-group-title" }, t("settings.crashedTitle", "设置分区渲染失败")),
-          React3.createElement(
+          React2.createElement("div", { className: "dmo-settings-group-title" }, t("settings.crashedTitle", "设置分区渲染失败")),
+          React2.createElement(
             "p",
             { className: "dmo-setting-help" },
             t("settings.crashedHelp", "这不影响播放器本身。把下面这行错误发出来就能定位：")
           ),
-          React3.createElement("pre", { className: "dmo-settings-trace" }, String(error && error.message ? error.message : error))
+          React2.createElement("pre", { className: "dmo-settings-trace" }, String(error && error.message ? error.message : error))
         );
       }
     }
@@ -9728,9 +8730,9 @@ var __dshMusicOnImpl__ = (() => {
     return BoundaryComponent;
   }
   function useSettingsSnapshot(store) {
-    const { useState: useState5, useEffect: useEffect6 } = reactRef();
-    const [snapshot, setSnapshot] = useState5(() => store ? store.get() : {});
-    useEffect6(() => {
+    const { useState: useState4, useEffect: useEffect5 } = reactRef();
+    const [snapshot, setSnapshot] = useState4(() => store ? store.get() : {});
+    useEffect5(() => {
       if (!store || typeof store.subscribe !== "function") return void 0;
       setSnapshot(store.get());
       return store.subscribe((next) => setSnapshot(next));
@@ -9739,19 +8741,6 @@ var __dshMusicOnImpl__ = (() => {
   }
   function fallbackTranslate(key, fallback) {
     return fallback !== void 0 ? fallback : key;
-  }
-  function useStateSafe(initial) {
-    const react = REACT_REF;
-    if (!react || typeof react.useState !== "function") {
-      return [typeof initial === "function" ? initial() : initial, () => {
-      }];
-    }
-    return react.useState(initial);
-  }
-  function useEffectSafe(effect, deps) {
-    const react = REACT_REF;
-    if (!react || typeof react.useEffect !== "function") return void 0;
-    return react.useEffect(effect, deps);
   }
   function registerShellDock(ctx, deps) {
     const { t } = deps;
@@ -9854,14 +8843,12 @@ var __dshMusicOnImpl__ = (() => {
     safely(ctx, () => registerSettingsSection(ctx, deps), "settings section");
     safely(ctx, () => registerTabType(ctx, deps), "tab type");
     safely(ctx, () => registerTabSeats(ctx, deps), "tab seats");
-    void ensurePresets({ store: runtime.store });
     ctx.effect(
       () => () => {
         try {
           runtime.engine.dispose();
         } catch (_error) {
         }
-        disposePresets();
       },
       "dsh-music-on: engine dispose"
     );

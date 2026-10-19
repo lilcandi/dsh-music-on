@@ -135,7 +135,11 @@ test('CSS：拖动面必须禁掉文字选中并给出 grab 光标', () => {
   for (const cls of ['.dmo-capsule {', '.dmo-vinyl-stage {']) {
     const at = css.indexOf(cls);
     assert.ok(at > 0, `缺少 ${cls}`);
-    const block = css.slice(at, at + 900);
+    // 块尾按下一个行首的 '}' 切，而不是固定 900 字符：
+    // 早先写死长度，只要注释/阴影变长就会把 user-select 切到窗口外，变成假失败。
+    const end = css.indexOf('\n}', at);
+    assert.ok(end > at, `${cls} 找不到块结束符`);
+    const block = css.slice(at, end);
     assert.match(block, /user-select: none/, `${cls} 必须禁掉文字选中，否则拖动变成拉选区`);
     assert.match(block, /cursor: grab/, `${cls} 必须给 grab 光标`);
     assert.match(block, /touch-action: none/, `${cls} 必须禁掉浏览器手势接管`);

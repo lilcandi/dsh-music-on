@@ -28,14 +28,5 @@ export const API_PREFIX = '/api/dsh-music-on';
 export const RESOLVE_PATH = `${API_PREFIX}/resolve`;
 export const STREAM_PATH = `${API_PREFIX}/stream`;
 
-/**
- * 预置音景静态资源前缀。
- *
- * 必须与 `src/host/presets-static.js` 里的 `PRESETS_PATH` 逐字相同 ——
- * 后者是路由实际注册用的常量，这里是给客户端拼 URL 用的常量。
- * 两者不一致的症状是「清单拉取 404，所有音景显示不可用」。
- */
-export const PRESETS_PATH = `${API_PREFIX}/presets`;
-
 /** 设置界面在宿主设置页里的分区 id。 */
 export const SETTINGS_SECTION_ID = 'dsh-music-on.settings';

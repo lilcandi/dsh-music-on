@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KIND_EXTERNAL_EMBED, toEmbedUrl } from '../sources.js';
-import { PresetsSection } from './PresetsSection.jsx';
 
 /**
  * 主面板。props = { engine, settings }
@@ -69,7 +68,7 @@ const LOOP_GLYPH = Object.freeze({
  * 进度每秒变 4 次，列表动辄上百行。
  */
 function QueueRow({ item, onSelect, onRemove }) {
-  const badge = item.kind === KIND_EXTERNAL_EMBED ? '外链' : item.source === 'preset' ? '音景' : '';
+  const badge = item.kind === KIND_EXTERNAL_EMBED ? '外链' : '';
   return h(
     'li',
     {
@@ -158,8 +157,6 @@ function EmptyStage({ dragging }) {
 export function PlayerPanel(props) {
   const engine = props && props.engine ? props.engine : null;
   const settings = (props && props.settings) || {};
-  // 预置音景控制器由 register.js 创建后注入；缺失时该分区显示加载态，面板其余部分照常工作。
-  const presets = (props && props.presets) || null;
 
   // 四个订阅在卸载时全部取消；音乐本身继续播（引擎是模块级单例）。
   const [state, setState] = useState(() => (engine ? engine.getState() : { status: 'idle', mode: 'internal' }));
@@ -604,9 +601,7 @@ export function PlayerPanel(props) {
         )
       : null,
 
-    /* 音景分区常驻面板底部：队列为空时它就是唯一入口，所以不能藏进折叠区之外。 */
-    h(PresetsSection, { presets, onNotice: setNotice }),
-
+    /* 面板底部不再挂任何预置分区，只保留播放器本体。 */
     notice !== '' ? h('div', { className: 'dmo-notice', role: 'status' }, notice) : null,
   );
 }

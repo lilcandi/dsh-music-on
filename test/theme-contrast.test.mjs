@@ -65,22 +65,79 @@ test('深色反转必须同时覆盖显式主题与系统偏好', () => {
   assert.ok(themeAt > mediaAt, '显式主题规则必须排在 @media 之后，才能压过系统偏好');
 });
 
-test('卡片与设置分区都必须落在配色锚点作用域内', () => {
-  // .dmo-card / .dmo-embed 共用一套；.dmo-settings 渲染在宿主设置页里，需自带一套。
-  //
-  // 注意：这里**不能**用 indexOf('.dmo-card {') 去取结束位置 —— 文件里 .dmo-card 本体
-  // 规则（曾排在配色锚点之前）会让 end < start，slice 返回空串，测试误报「缺 --dmo-fg」。
-  // 正确做法是从锚点那个选择器往后取固定窗口。
-  const anchors = ['.dmo-card,\n.dmo-embed {'];
-  const anchorAt = CSS.indexOf(anchors[0]);
-  assert.ok(anchorAt > 0, '缺少 .dmo-card / .dmo-embed 配色锚点规则');
-  const cardScope = CSS.slice(anchorAt, anchorAt + 400);
-  assert.ok(cardScope.includes('--dmo-fg:'), '卡片作用域必须定义 --dmo-fg');
+test('卡片、嵌入窗与设置分区共享同一支配色锚点作用域', () => {
+  // 历史：.dmo-settings 曾自带一整套硬编码令牌（--dmo-brand: #4d6bfe 等），
+  // 而它排在 7 个主题块之后 → 设置页永远显示鲸鱼蓝，换主题只改播放器不改设置页。
+  // 现在四者共用文件上方那一段锚点，选择器列表里必须同时出现。
+  const anchorRule = /\.dmo-dock-stack,\s*\n\.dmo-card,\s*\n\.dmo-embed,\s*\n\.dmo-settings\s*\{/;
+  assert.ok(anchorRule.test(CSS), '配色锚点选择器列表必须同时包含 .dmo-dock-stack/.dmo-card/.dmo-embed/.dmo-settings');
 
-  const settingsAt = CSS.indexOf('.dmo-settings {');
-  assert.ok(settingsAt > 0, '缺少 .dmo-settings 规则');
-  const settingsBlock = CSS.slice(settingsAt, settingsAt + 700);
-  assert.ok(settingsBlock.includes('--dmo-fg:'), '设置分区必须自带 --dmo-fg');
+  const anchorAt = CSS.search(anchorRule);
+  const cardScope = CSS.slice(anchorAt, anchorAt + 1500);
+  assert.ok(cardScope.includes('--dmo-fg:'), '锚点作用域必须定义 --dmo-fg');
+  assert.ok(cardScope.includes('--dmo-brand:'), '锚点作用域必须定义 --dmo-brand');
+
+  // 设置分区本体（顶层规则）只该有布局属性，不得再定义颜色令牌。
+  // 三个必须区分开的 `.dmo-settings {`：
+  //   1) 共享锚点块 —— 它的选择器列表末行就是 `.dmo-settings {`（行首无缩进，会被匹配到）；
+  //   2) 本体布局规则（行首无缩进）；
+  //   3) @media 里的深色覆盖（有缩进，必须保留）。
+  // 所以取**最后**一条行首无缩进的，才是本体。
+  const topLevel = [...CSS.matchAll(/^\.dmo-settings \{/gm)].map((m) => m.index);
+  assert.equal(topLevel.length, 2,
+    `.dmo-settings 行首规则应为「锚点块 + 本体」共 2 条，实际 ${topLevel.length} 条`);
+  const bodyAt = topLevel[topLevel.length - 1];
+  const settingsBlock = CSS.slice(bodyAt, CSS.indexOf('}', bodyAt) + 1);
+  for (const token of ['--dmo-fg:', '--dmo-brand:', '--dmo-glass:']) {
+    assert.ok(!settingsBlock.includes(token),
+      `.dmo-settings 不得重复定义 ${token}，否则会盖掉主题（这正是设置页不跟随主题的根因）`);
+  }
+});
+
+test('设置分区必须自带底色，不得把文字浮在宿主的半透明面板上', () => {
+  // 真实事故：.dmo-settings 早前只有布局属性、没有 background，于是 --dmo-fg-faint
+  // 直接落在宿主设置弹窗的 rgba(132,122,98,0.5) 面板上。真机实测对比度只有 2.0:1，
+  // 11.5px 的「长期保留的链接…」那行几乎和背景同色，人眼读不出来。
+  // 这类问题 bundle 有字面量、自检全过、服务端 200，唯独看不见，必须钉成断言。
+  const topLevel = [...CSS.matchAll(/^\.dmo-settings \{/gm)].map((m) => m.index);
+  const bodyAt = topLevel[topLevel.length - 1];
+  const settingsBlock = CSS.slice(bodyAt, CSS.indexOf('}', bodyAt) + 1);
+  assert.ok(/background\s*:/.test(settingsBlock),
+    '.dmo-settings 必须自带 background（否则淡色说明文字落在宿主半透明面板上，对比度不足）');
+
+  // 底色必须来自本子树令牌，不能写死某个颜色 —— 深色模式下要能跟着翻转。
+  const bgLine = settingsBlock.split('\n').find((line) => /background\s*:/.test(line)) || '';
+  assert.ok(/var\(--dmo-glass/.test(bgLine),
+    `设置分区的底色必须取 --dmo-glass 系列令牌，实际：${bgLine.trim()}`);
+});
+
+test('七套配色主题必须用真选择器，不得被 :where() 归零权重', () => {
+  // 真机实测复现过的 bug：写成 :where([data-dmo-theme='x']) 后权重为 0，
+  // 永远输给权重 (0,1,0) 的默认锚点块，七套主题算出来的计算样式完全一致。
+  const themes = ['whale', 'aurora', 'mint', 'sunset', 'rose', 'neon', 'mono'];
+  for (const name of themes) {
+    const wrapped = `:where([data-dmo-theme='${name}'])`;
+    assert.equal(CSS.includes(wrapped), false,
+      `${wrapped} 权重为 0，会被默认块覆盖；请写成 [data-dmo-theme='${name}']`);
+  }
+
+  // 每条主题块都要真的给出不同的 --dmo-brand
+  const brands = themes.map((name) => {
+    const at = CSS.indexOf(`[data-dmo-theme='${name}'] {`);
+    assert.ok(at > 0, `缺少主题块 ${name}`);
+    const end = CSS.indexOf('}', at);
+    const block = CSS.slice(at, end);
+    const m = block.match(/--dmo-brand:\s*(#[0-9a-fA-F]{3,8})/);
+    assert.ok(m, `主题 ${name} 必须定义 --dmo-brand`);
+    return m[1].toLowerCase();
+  });
+  assert.equal(new Set(brands).size, themes.length,
+    `七套主题的 --dmo-brand 必须互不相同，实际 ${new Set(brands).size} 种：${brands.join(', ')}`);
+
+  // 主题块必须排在默认锚点块之后才能靠顺序胜出
+  const anchorAt = CSS.search(/\.dmo-dock-stack,\s*\n\.dmo-card,/);
+  const firstThemeAt = CSS.indexOf("[data-dmo-theme='whale'] {");
+  assert.ok(firstThemeAt > anchorAt, '主题块必须排在默认锚点块之后');
 });
 
 test('纯白文字只能出现在有实色底的按钮上', () => {

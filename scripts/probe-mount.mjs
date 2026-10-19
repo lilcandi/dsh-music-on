@@ -184,7 +184,7 @@ window.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(
 //
 // 注意：不能直接 `this.paused = false` —— happy-dom 把 paused 定义成只读 getter，
 // 赋值会抛 `Cannot set property paused of [object Object] which has only a getter`。
-// 那行报错曾经把我误导成「音景入队链路坏了」，实际产品代码从不给 paused 赋值
+// 那行报错曾经把我误导成「入队链路坏了」，实际产品代码从不给 paused 赋值
 // （grep `\.paused\s*=` 在 src/ 下零命中），纯粹是桩件写法错。
 // 用 defineProperty 覆盖成可写，play/pause 才有可观测状态。
 {
@@ -290,21 +290,7 @@ const sandbox = {
   ResizeObserver: FakeResizeObserver,
   IntersectionObserver: window.IntersectionObserver,
   getComputedStyle: window.getComputedStyle.bind(window),
-  fetch: (input) => {
-    // 音景清单要真数据才能验证「拉到了就渲染」这条链路。
-    // 直接读磁盘上的 presets/manifest.json，而不是去连 3080 —— 探针不联网。
-    const url = String(input && input.url ? input.url : input);
-    if (url.includes('manifest.json')) {
-      const raw = readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8');
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(JSON.parse(raw)),
-        text: () => Promise.resolve(raw),
-      });
-    }
-    return Promise.reject(new Error('探针不联网'));
-  },
+  fetch: () => Promise.reject(new Error('探针不联网')),
   addEventListener: () => {},
   removeEventListener: () => {},
   matchMedia: (query) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
@@ -356,7 +342,7 @@ function summarize(label, host) {
   const canvasInfo = canvases.map((c) => `${c.width}x${c.height}`);
   console.log(`\n===== ${label} =====`);
   console.log(`HTML 长度 ${html.length}`);
-  for (const sel of ['.dmo-settings', '.dmo-setting-row', '.dmo-lib', '.dmo-lib-row', '.dmo-lib-empty', '.dmo-dock-stack', '.dmo-capsule', '.dmo-card', '.dmo-barspectrum', 'canvas', '.dmo-vinyl', '.dmo-progress', '.dmo-seek', '.dmo-knob', '.dmo-knob-pointer', '.dmo-transport-tail', '.dmo-mixer', '.dmo-volume', '.dmo-soundscapes', '.dmo-soundscapes-head', '.dmo-soundscapes-body', '[data-preset-id]']) {
+  for (const sel of ['.dmo-settings', '.dmo-setting-row', '.dmo-lib', '.dmo-lib-row', '.dmo-lib-empty', '.dmo-dock-stack', '.dmo-capsule', '.dmo-card', '.dmo-barspectrum', 'canvas', '.dmo-vinyl', '.dmo-progress', '.dmo-seek', '.dmo-knob', '.dmo-knob-pointer', '.dmo-transport-tail', '.dmo-mixer', '.dmo-volume']) {
     const n = q(sel);
     console.log(`${n > 0 ? '✓' : '✗'} ${sel}  ×${n}`);
   }
@@ -442,35 +428,6 @@ if (knob) {
   console.log(`仍存在横条音量 .dmo-volume = ${dockHost.host.querySelector('.dmo-mixer .dmo-volume') ? '是（不该有）' : '否'}`);
 } else {
   console.log('\n[注意] 找不到 .dmo-knob，音量旋钮没渲染出来');
-}
-
-/* ---------------- 音景入口：展开后必须能看见七条 ---------------- */
-//
-// 存在理由：插件包里躺着七条 CC0 WAV，README 与商店描述都写着「内置七条音景」，
-// 但右下角卡片里曾经一个播它们的按钮都没有 —— 只有右侧栏那个 PlayerPanel 挂了
-// PresetsSection。所有自检都是绿的（文件确实在包里），用户却找不到入口。
-// 这一段靠真挂载 + 真清单，验证「拉到了就渲染出来」。
-const soundHead = dockHost.host.querySelector('.dmo-soundscapes-head');
-console.log(`\n音景标题按钮 = ${soundHead ? '有' : '无'}`);
-if (soundHead) {
-  const beforeOpen = dockHost.host.querySelectorAll('[data-preset-id]').length;
-  console.log(`折叠状态下可见音景条目 = ${beforeOpen}（应为 0）`);
-  soundHead.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  await new Promise((r) => setTimeout(r, 50));
-  const items = dockHost.host.querySelectorAll('[data-preset-id]');
-  console.log(`展开后音景条目 = ${items.length}（应为 7）`);
-  const names = [...items].map((n) => (n.textContent || '').trim().slice(0, 12));
-  console.log(`音景名称 = ${names.join(' / ')}`);
-  const ids = [...items].map((n) => n.getAttribute('data-preset-id'));
-  console.log(`音景 id = ${ids.join(',')}`);
-  // 点一条：应该走 engine.addManifest 入队，并且切到单曲循环
-  if (items.length > 0) {
-    items[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 50));
-    console.log('已点击首条音景（真播放需要真实 AudioContext，探针只验证到入队）');
-  }
-} else {
-  console.log('[注意] 找不到 .dmo-soundscapes-head —— 音景入口没渲染出来');
 }
 
 console.log('\n=========== 控制台错误汇总 ===========');

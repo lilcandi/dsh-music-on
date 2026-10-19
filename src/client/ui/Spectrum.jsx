@@ -54,12 +54,13 @@ const MAX_DPR = 2;
 const ANALYSER_PROBE_MS = 500;
 
 /** 样式枚举。顺序无关，只用于合法性判断。 */
-const STYLE_VALUES = ['dots', 'bars', 'line', 'wave', 'off'];
+const STYLE_VALUES = ['dots', 'bars', 'line', 'wave', 'blocks', 'mirror', 'off'];
 const DEFAULT_STYLE = 'dots';
 
 const DEFAULT_BAR_COUNT = 48;
 const BAR_COUNT_MIN = 16;
-const BAR_COUNT_MAX = 96;
+/** 上限 160：窄柱 × 满铺需要这个密度，48 柱满铺只能变成一排粗柱。 */
+const BAR_COUNT_MAX = 160;
 const BAR_COUNT_STEP = 8;
 
 const GAIN_MIN = 0.5;
@@ -76,24 +77,20 @@ const GLOW_BLUR = { off: 0, soft: 6, strong: 12 };
 const GLOW_STRONG_COLOR = 'rgba(120,190,255,0.85)';
 
 /**
- * dots / bars 共用的几何常量：细柱 + 均匀窄缝，圆角 = 柱宽一半（视觉上是胶囊/圆点）。
- * 柱宽夹 [2,4]，缝夹 [1.5,2]（极窄容器才允许破例收窄），pitch 上限 4+2=6。
+ * 柱宽与缝的几何约束。
+ *
+ * 旧版把柱宽死夹在 [2,4]、缝死夹在 [1.5,2]，于是 48 柱 × 6px pitch = 286px 就是
+ * 物理上限，无论窗口多宽都只有屏幕中间一小撮 —— 这就是用户说的「频谱太短」。
+ *
+ * 新版换了个前提：**整排必须铺满容器**。柱宽上限抬到 24px 让低柱数也能撑开，
+ * 缝按槽位的 34% 取（最宽 8px）。想要「细密圆点」的观感就把柱数调到 140-160、
+ * 宽度拉到 100%，那时 pitch 只有 7px 上下，柱子自然细。
  */
 const DOT_W_MIN = 2;
-const DOT_W_MAX = 4;
-/** 期望柱间距：柱宽 = pitch - 这个值，再夹进 [DOT_W_MIN, DOT_W_MAX]。 */
-const DOT_GAP_TARGET = 1.75;
-/** 缝的下限 / 上限。上限 2px 是「细密」的守门人：缝一宽，底噪圆点线就断成散点。 */
-const DOT_GAP_MIN = 1.5;
-const DOT_GAP_MAX = 2;
-/**
- * pitch 上限 = 柱宽上限 + 缝上限 = 6px。
- * 容器比 `pitch * (count-1) + barW` 更宽时（通栏模式整屏宽度很容易到这个量级），
- * 整排居中而不是把缝拉开铺满 —— 拉开后相邻柱的距离能到二三十像素，
- * 与「一排细密圆点」彻底背离。想让通栏真正铺满，只能靠调大 spectrumBars；
- * 48 柱 × 6px pitch = 286px 就是这个几何关系的物理上限。
- */
-/** 极窄容器（slot < 3.5px）的最后退让：宁可缝收窄到 0.5px 也不让相邻柱重叠。 */
+const DOT_W_MAX = 16;
+/** 柱宽占槽位的比例，剩下的就是缝：0.5 = 柱与缝等宽，观感最接近「细密刻度」。 */
+const DOT_W_RATIO = 0.5;
+/** 极窄容器（slot < 2.5px）的最后退让：宁可缝收窄到 0.5px 也不让相邻柱重叠。 */
 const DOT_GAP_FLOOR = 0.5;
 /** 底噪圆点与柱顶峰值标记的固定高度。 */
 const FLOOR_H = 2;
@@ -253,24 +250,19 @@ export function normalizeGlow(value) {
 /**
  * dots / bars / wave 共用的水平几何。返回柱宽、间距、pitch 与起始 x。
  *
- * 规则（改这里等于改整体观感）：
- *   slot = width / count                      每根柱分到的水平槽位
- *   barW = clamp(slot - 1.75, 2, 4)           细柱：2~4px，绝不成为「粗壮霓虹柱」
- *   gap  = slot - barW，再夹进 [1.5, 2]        柱缝：契约要求的 1.5~2px
- *   x0   = (width - 整排宽) / 2                整排比容器窄时居中
+ * 核心契约：**整排铺满给定宽度**（`total === width`，误差 < 0.01px）。
+ * 旧实现把柱宽夹在 [2,4]、缝夹在 [1.5,2]，整排最多 286px，窗口再宽也只居中一小撮；
+ * 那正是「频谱太短」的根源。现在改成：
  *
- * 唯一破例：slot < 3.5px（极窄容器，或 96 柱挤在 320px 里）时容不下「2px 柱 + 1.5px 缝」，
- * 此时缝退到 0.5px 下限、柱压到 slot-0.5，绝不让相邻柱重叠 —— 重叠会糊成一条实心带，
- * 比变窄更难看。
+ *   slot = width / count                每根柱均分到的槽位
+ *   barW = clamp(slot × 0.5, 2, 16)     柱宽 = 槽位一半，细密但不糊成实心
+ *   gap  = slot - barW                  缝自动吃掉剩余，≥ 0.5px 保证不粘连
+ *   x0   = 0                            不再居中，从左边铺到右边
  *
- * 实测取值（见 scripts/check-spectrum.mjs 的 [4] 段输出）：
- *   128px × 48 柱 → 柱 2.00 / 缝 0.67 / pitch 2.67（极窄，缝破例收窄）；
- *   320px × 48 柱 → 柱 4.00 / 缝 2.00 / pitch 6.00 / 整排 286px / x0 17；
- *   420px × 48 柱 → 柱 4.00 / 缝 2.00 / pitch 6.00 / 整排 286px / x0 67；
- *   1440px × 48 柱 → 柱 4.00 / 缝 2.00 / pitch 6.00 / 整排 286px / x0 577。
- * 也就是说 320px 以上容器里 pitch 恒定 6px、整排 286px，其余宽度均分为左右留白。
- * 想让通栏真正铺满只能调大 spectrumBars（96 柱 × 6px = 572px），
- * 48 柱配 2px 缝的物理上限就是 286px —— 这是契约给的柱宽/缝宽与柱数共同决定的。
+ * 槽位极窄（96 柱挤在 320px 容器里）时 barW 触底 2px、gap 触底 0.5px，
+ * 此时整排会溢出容器 —— 那就照实溢出（overflow 由外层裁掉），
+ * 绝不为了「塞下」而让相邻柱重叠：重叠在视觉上会糊成一条实心带，比截断更糟。
+ *
  * @param {number} width CSS 像素宽度。
  * @param {number} count 柱数。
  * @returns {{barW:number, gap:number, step:number, slot:number, x0:number, total:number}}
@@ -280,19 +272,20 @@ export function dotLayout(width, count) {
   const w = Math.max(1, Number(width) || 1);
   const slot = w / n;
 
-  let barW = Math.min(DOT_W_MAX, Math.max(DOT_W_MIN, slot - DOT_GAP_TARGET));
-  let gap = slot - barW;
-  if (gap > DOT_GAP_MAX) gap = DOT_GAP_MAX;
-  if (gap < DOT_GAP_MIN) {
-    // 槽位挤：先把缝收到 DOT_GAP_MIN 能容纳的最大柱宽，不行再退到 FLOOR。
-    gap = Math.max(DOT_GAP_FLOOR, Math.min(DOT_GAP_MIN, slot - DOT_W_MIN));
-    barW = Math.min(DOT_W_MAX, Math.max(1, slot - gap));
+  let barW = Math.min(DOT_W_MAX, Math.max(DOT_W_MIN, slot * DOT_W_RATIO));
+  // 缝由「剩下多少宽度」反解：n 根柱 + (n-1) 个缝必须精确等于容器宽。
+  // 写成 (w - barW*n)/(n-1) 而不是 slot - barW，是为了让最后一根柱正好贴住右边界 ——
+  // 用 slot - barW 会剩半个缝的右侧留白，加起来看着就「差一截没铺满」。
+  let gap = n === 1 ? 0 : (w - barW * n) / (n - 1);
+  if (gap < DOT_GAP_FLOOR) {
+    // 槽位太挤：缝收到下限，柱宽按剩余空间反算；仍放不下就照实溢出（不重叠优先）。
+    gap = DOT_GAP_FLOOR;
+    barW = n === 1 ? w : Math.max(1, (w - gap * (n - 1)) / n);
   }
 
   const step = barW + gap;
   const total = step * (n - 1) + barW;
-  // 槽位连「2px 柱 + 0.5px 缝」都放不下时整排会溢出，居中避免右边秃一块。
-  return { barW, gap, step, slot, x0: Math.max(0, (w - total) / 2), total };
+  return { barW, gap, step, slot, x0: 0, total };
 }
 
 /* ---------------- 组件 ---------------- */
@@ -618,6 +611,102 @@ export function Spectrum(props) {
       ctx2d.stroke();
     }
 
+    /**
+     * blocks：音频可视化软件的传统观感 —— 每列一串独立小方块，
+     * 亮起的方块为渐变色，未亮起的留极淡的占位格。
+     *
+     * 与 dots 的区别在语义：dots 是「一条连续的柱体」，blocks 是「离散的格数」，
+     * 读数像音量表而不是频谱带。格高固定 4px，所以高度变化是跳跃的，更硬朗。
+     */
+    function drawBlocks(colors) {
+      const { width, height } = geometryRef.current;
+      const layout = dotLayout(width, barCount);
+      const { barW, step, x0 } = layout;
+      const radius = Math.min(barW / 2, 2);
+      const { blur, color: glowColor } = glowParams(colors);
+      const bands = bandsRef.current;
+      const cellH = 4;
+      const cellGap = 2;
+      const pitchY = cellH + cellGap;
+      const maxCells = Math.max(1, Math.floor(height / pitchY));
+      const gradient = ctx2d.createLinearGradient(0, height, 0, 0);
+      gradient.addColorStop(0, colors.low);
+      gradient.addColorStop(1, colors.high);
+
+      for (let i = 0; i < barCount; i += 1) {
+        const x = x0 + i * step;
+        const lit = Math.min(maxCells, Math.round(bands[i] * maxCells));
+        const peakCell = Math.min(maxCells, Math.round(peaksRef.current[i] * maxCells));
+
+        // 未亮的占位格：只画最底下 3 个，避免整屏都是网格噪声。
+        for (let c = 0; c < Math.min(3, maxCells - lit); c += 1) {
+          ctx2d.fillStyle = colors.base;
+          roundRect(ctx2d, x, height - (c + 1) * pitchY + cellGap, barW, cellH, radius);
+          ctx2d.fill();
+        }
+
+        for (let c = 0; c < lit; c += 1) {
+          if (blur > 0) {
+            ctx2d.shadowBlur = blur;
+            ctx2d.shadowColor = glowColor;
+          }
+          ctx2d.fillStyle = gradient;
+          roundRect(ctx2d, x, height - (c + 1) * pitchY + cellGap, barW, cellH, radius);
+          ctx2d.fill();
+          if (blur > 0) {
+            ctx2d.shadowBlur = 0;
+            ctx2d.shadowColor = 'transparent';
+          }
+        }
+
+        // 峰值：单独一格更亮，读出「刚才到过哪儿」。
+        if (peakCell > lit && peakCell <= maxCells) {
+          ctx2d.fillStyle = colors.high;
+          roundRect(ctx2d, x, height - peakCell * pitchY + cellGap, barW, cellH, radius);
+          ctx2d.fill();
+        }
+      }
+      ctx2d.shadowBlur = 0;
+    }
+
+    /**
+     * mirror：从屏幕中线向上下两侧对称展开，像一条横向的声波。
+     *
+     * 与 wave 的区别：wave 画的是时域采样（连续波形），mirror 画的是频域各频段
+     * 的柱体，上下对称只是造型。频域信息量更大，视觉上也更像「音乐条」。
+     */
+    function drawMirror(colors) {
+      const { width, height } = geometryRef.current;
+      const layout = dotLayout(width, barCount);
+      const { barW, step, x0 } = layout;
+      const radius = barW / 2;
+      const { blur, color: glowColor } = glowParams(colors);
+      const center = height / 2;
+      const bands = bandsRef.current;
+      const gradient = ctx2d.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, colors.high);
+      gradient.addColorStop(0.5, colors.low);
+      gradient.addColorStop(1, colors.high);
+
+      for (let i = 0; i < barCount; i += 1) {
+        const x = x0 + i * step;
+        // 上限 center 保证不越出画布；下限 1px 保证中线永远有一条连续的光带。
+        const half = Math.min(center, Math.max(1, bands[i] * center));
+        if (blur > 0) {
+          ctx2d.shadowBlur = blur;
+          ctx2d.shadowColor = glowColor;
+        }
+        ctx2d.fillStyle = gradient;
+        roundRect(ctx2d, x, center - half, barW, half * 2, radius);
+        ctx2d.fill();
+        if (blur > 0) {
+          ctx2d.shadowBlur = 0;
+          ctx2d.shadowColor = 'transparent';
+        }
+      }
+      ctx2d.shadowBlur = 0;
+    }
+
     function step(now, prevTs) {
       const { width, height } = geometryRef.current;
       const nowTs = typeof now === 'number' ? now : performance.now();
@@ -676,6 +765,8 @@ export function Spectrum(props) {
       ctx2d.clearRect(0, 0, width, height);
       const colors = palette();
       if (style === 'dots') drawDots(colors);
+      else if (style === 'blocks') drawBlocks(colors);
+      else if (style === 'mirror') drawMirror(colors);
       else if (style === 'wave') drawWave(colors);
       else if (style === 'line') drawLine(colors);
       else drawBars(colors);
@@ -885,9 +976,7 @@ export const __test = {
     BAR_COUNT_MAX,
     DOT_W_MIN,
     DOT_W_MAX,
-    DOT_GAP_TARGET,
-    DOT_GAP_MIN,
-    DOT_GAP_MAX,
+    DOT_W_RATIO,
     DOT_GAP_FLOOR,
     FLOOR_H,
     PEAK_H,

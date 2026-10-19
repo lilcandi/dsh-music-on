@@ -4,7 +4,7 @@
  * 三种 kind（设计铁律，不可增删而不改 engine）：
  *   local-file      用户拖入的 File 或 FileList 里的一项。走 URL.createObjectURL，
  *                   必须流式播放，绝不 decodeAudioData 整块解码。
- *   url-audio       直链音频：预置音景的 WAV、平台代理解析出的直链。
+ *   url-audio       直链音频：任意绝对 http(s) 音频地址、平台代理解析出的直链。
  *                   同样交给 <audio> + MediaElementSource。
  *   external-embed  第三方 iframe 播放器（B 站 player.bilibili.com/player.html?bvid=...）。
  *                   它的声音在 iframe 自己的文档里，进不了本页 AudioContext，
@@ -236,12 +236,9 @@ function baseTrack(parts) {
     sourceUrl: parts.sourceUrl ?? null,
     /** 封面图 URL。B 站由解析层提供；本地文件可后填 objectURL；空表示走黑胶兜底。 */
     cover: parts.cover ?? null,
-    presetId: parts.presetId ?? null,
     unavailableReason: parts.unavailableReason ?? null,
     loopStart: parts.loopStart ?? null,
     loopEnd: parts.loopEnd ?? null,
-    /** presets.play() 的 mode，引擎与 UI 据此分流；普通音源为 null。 */
-    presetMode: parts.presetMode ?? null,
     /** 该音源的频谱是否可能可用（false = UI 直接画静止占位，不用等 engine 说）。 */
     spectrumPossible: parts.spectrumPossible ?? true,
   };
@@ -314,7 +311,7 @@ export function createLocalTrack(file, options) {
 /**
  * 由直链 URL 构造 Track。直链不创建 objectURL，revoke 是空操作，
  * 但保留同名字段，让 engine 可以无差别地对所有 track 调用 revoke。
- * @param {{ url: string, title?: string, artist?: string, duration?: number, id?: string, presetId?: string }} spec
+ * @param {{ url: string, title?: string, artist?: string, duration?: number, id?: string }} spec
  * @returns {object}
  */
 export function createUrlTrack(spec) {
@@ -336,7 +333,6 @@ export function createUrlTrack(spec) {
     url,
     pageUrl: spec && typeof spec.pageUrl === 'string' && spec.pageUrl !== '' ? spec.pageUrl : null,
     platform: spec && typeof spec.platform === 'string' && spec.platform !== '' ? spec.platform : null,
-    presetId: (spec && spec.presetId) || null,
     loopStart: safeLoopSeconds(spec && spec.loopStart),
     loopEnd: safeLoopSeconds(spec && spec.loopEnd),
   });
@@ -407,51 +403,6 @@ export function createPlatformTrack(spec) {
   // 只接受字符串形态，坏值一律置 null —— UI 会退回纯黑胶图形，
   // 绝不留一个空白 <img> 在盘面上。
   track.cover = typeof input.cover === 'string' && input.cover.trim() !== '' ? input.cover.trim() : null;
-  return track;
-}
-
-/**
- * 由预置音景清单条目构造 Track（presets/manifest.json 的 items[]）。
- *
- * 清单里两种条目都要能入队：
- *   status === 'seeded'       -> file 有值，转成 url-audio，src 走 presets/<file>
- *   status === 'unavailable'  -> 仍然入队，但 load() 直接 reject 并带 unavailableReason，
- *                                UI 能解释原因，用户不会以为「点了没反应」。
- * @param {object} item 清单条目
- * @param {{ baseUrl?: string, id?: string }} [options]
- */
-export function createPresetTrack(item, options) {
-  const baseUrl = options && typeof options.baseUrl === 'string' ? options.baseUrl : 'presets/';
-  const name = item && typeof item.name === 'string' && item.name !== '' ? item.name : '音景';
-  const reason = item && typeof item.unavailableReason === 'string' ? item.unavailableReason : null;
-
-  let src = null;
-  if (item && typeof item.url === 'string' && item.url !== '') src = item.url;
-  else if (item && typeof item.file === 'string' && item.file !== '') src = `${baseUrl}${item.file}`;
-
-  const track = baseTrack({
-    id: (options && options.id) || (item && typeof item.id === 'string' ? `preset:${item.id}` : nextTrackId('preset')),
-    title: name,
-    artist: '预置音景',
-    kind: KIND_URL_AUDIO,
-    duration: safeSeconds(item && item.duration),
-    seekable: true,
-    source: 'preset',
-    url: src,
-    presetId: item && typeof item.id === 'string' ? item.id : null,
-    unavailableReason: src === null ? reason || '该音景缺少音频文件' : null,
-    loopStart: safeLoopSeconds(item && item.loopStart),
-    loopEnd: safeLoopSeconds(item && item.loopEnd),
-    presetMode: item && typeof item.mode === 'string' ? item.mode : null,
-  });
-
-  track.load = function load() {
-    if (src === null) return Promise.reject(new Error(track.unavailableReason || '音景不可用'));
-    return Promise.resolve({ src, kind: KIND_URL_AUDIO });
-  };
-  track.revoke = function revoke() {
-    /* 预置音景是插件自带资源，不持有 objectURL */
-  };
   return track;
 }
 
@@ -572,39 +523,6 @@ export function createBilibiliTrack(spec) {
 }
 
 /**
- * 把 presets.play() 的返回值分流成 engine 认识的形态。
- *
- * presets.play() 返回 `{ mode: 'audio' | 'iframe' | 'external', spectrum: boolean }`，
- * 另外可能带 url / file / embedUrl / bvid / cid / loopStart / loopEnd。
- * 这里不直接建 Track，只给出「怎么播」的决策，让调用方挑对应的构造函数 ——
- * 因为 Track 还要带上清单条目的标题等元数据，那不是这个函数该知道的。
- *
- * @param {{ mode?: string, spectrum?: boolean, url?: string, file?: string,
- *           embedUrl?: string, bvid?: string, cid?: string|number }} played
- * @returns {{ route: 'audio'|'iframe'|'external', spectrum: boolean, reason: string|null }}
- */
-export function resolvePresetRoute(played) {
-  const input = played || {};
-  const mode = typeof input.mode === 'string' ? input.mode : '';
-  const spectrum = input.spectrum === true;
-  if (mode === 'audio') {
-    const hasSource =
-      (typeof input.url === 'string' && input.url !== '') ||
-      (typeof input.file === 'string' && input.file !== '') ||
-      (typeof input.bvid === 'string' && input.bvid !== '');
-    if (hasSource === false) {
-      return { route: 'external', spectrum: false, reason: '该音景声明为音频，但没有给出可播地址' };
-    }
-    // spectrum:false 的 audio 说明宿主侧已知它进不了频谱（比如需要鉴权的流），
-    // 尊重声明，但路由仍是 audio。
-    return { route: 'audio', spectrum, reason: null };
-  }
-  if (mode === 'iframe') return { route: 'iframe', spectrum: false, reason: null };
-  if (mode === 'external') return { route: 'external', spectrum: false, reason: null };
-  return { route: 'external', spectrum: false, reason: `未知的音景模式：${mode || '空'}` };
-}
-
-/**
  * 从各种「文件集合」的诡异形状里取出 File[]。
  * 拖拽给 DataTransfer.files，input[type=file] 给 FileList（类数组无 forEach）。
  * 目录拖入只取顶层文件，不递归 —— 递归会把整张专辑目录拖成上千条队列。
@@ -670,23 +588,6 @@ export function readDataTransfer(event) {
 }
 
 /**
- * 把一个预置清单数组整体转成 Track 数组。
- * manifest.items 里 unavailable 的条目也入队并带原因。
- * @param {object[]} items
- * @param {{ baseUrl?: string }} [options]
- * @returns {object[]}
- */
-export function tracksFromManifest(items, options) {
-  if (Array.isArray(items) === false) return [];
-  const out = [];
-  for (const item of items) {
-    if (!item || typeof item !== 'object') continue;
-    out.push(createPresetTrack(item, options));
-  }
-  return out;
-}
-
-/**
  * 给 UI 用的轻量描述：不含 File / 函数，可安全放进 React state 做比较。
  * @param {object} track
  * @returns {object | null}
@@ -703,8 +604,6 @@ export function describeTrack(track) {
     embedUrl: track.embedUrl,
     streamUrl: track.streamUrl,
     cover: track.cover,
-    presetId: track.presetId,
-    presetMode: track.presetMode,
     spectrumPossible: track.spectrumPossible,
     loopStart: track.loopStart,
     loopEnd: track.loopEnd,
@@ -713,7 +612,7 @@ export function describeTrack(track) {
     // 收藏与历史要用的「原始页面地址」。UI 不该自己去猜 track.url 是相对路径还是
     // blob:，那是本模块的知识。回推规则见 trackPageUrl。
     pageUrl: trackPageUrl(track),
-    // 平台曲目的源歌单地址（票据过期后靠它重新解析）。本地文件与预置音景没有。
+    // 平台曲目的源歌单地址（票据过期后靠它重新解析）。本地文件没有。
     sourceUrl: track.sourceUrl ?? null,
     platform: track.platform ?? null,
   };
@@ -734,7 +633,7 @@ export function isInternalKind(kind) {
  *
  * 这是收藏与历史能成立的前提：那两个功能存的是链接，而 Track 内部的地址有四种
  * 形态，其中三种都不能直接拿去收藏 ——
- *   url-audio（含预置音景）  相对路径 `presets/xxx.wav` 或 blob:，重启后失效；
+ *   url-audio                相对路径或 blob:，重启后失效；
  *   external-embed           存的是 player.bilibili.com 的播放器壳地址；
  *   本地文件                  blob:，绝对不能序列化。
  * 所以这里统一回推成**原始页面地址**：B 站由 bvid 反拼 www.bilibili.com/video/<bvid>，
@@ -758,7 +657,7 @@ export function trackPageUrl(track) {
   for (const raw of candidates) {
     if (typeof raw !== 'string') continue;
     const value = raw.trim();
-    // 只收绝对 http(s)。blob: / data: / 相对路径（预置音景、票据流）一律不算「可保存的地址」。
+    // 只收绝对 http(s)。blob: / data: / 相对路径（票据流）一律不算「可保存的地址」。
     if (/^https?:\/\//i.test(value)) return value;
   }
   return null;

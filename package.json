@@ -1,9 +1,9 @@
 {
   "name": "dsh-music-on",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
-  "description": "A music dock for the DSH Web GUI: a draggable player in the bottom-right corner with a live blue-white spectrum, drag-and-drop local audio, Bilibili / NetEase Cloud Music / QQ Music playlist links, and seven built-in CC0 soundscapes.",
+  "description": "A music dock for the DSH Web GUI: a draggable player in the bottom-right corner with a live blue-white spectrum, drag-and-drop local audio, and Bilibili / NetEase Cloud Music / QQ Music playlist links.",
   "keywords": [
     "deepseek-harness",
     "dsh",
@@ -17,9 +17,7 @@
     "bilibili",
     "netease-cloud-music",
     "qqmusic",
-    "lofi",
-    "white-noise",
-    "soundscape",
+    "color-theme",
     "web-ui"
   ],
   "homepage": "https://github.com/lilcandi/dsh-music-on#readme",
@@ -45,7 +43,6 @@
     "index.js",
     "client.js",
     "src",
-    "presets",
     "docs",
     "cordis.patch.yml",
     "screenshots.json",
@@ -61,7 +58,7 @@
   "dsh": {
     "id": "dsh-music-on",
     "name": "音乐台",
-    "version": "0.1.3",
+    "version": "0.2.0",
     "compatibility": {
       "dsh": ">=0.2.0-rc.1 <0.2.1-0 || >=0.2.1-0 <0.3.0-0",
       "dshReleases": {

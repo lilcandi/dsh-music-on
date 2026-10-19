@@ -1,8 +1,7 @@
 # dsh-music-on
 
 DSH Web 界面右下角的音乐台。一枚可拖动的胶囊常驻在那里，点开是播放卡片：拖入本地音频即播、
-粘贴 B 站 / 网易云音乐 / QQ 音乐的歌单链接自动解析入队、页面底部跟着一条蓝白频谱，
-另有七个内置音景（白噪音、雨声、咖啡馆、深夜酒吧、鼓点、爵士、Lo-Fi）开箱即听。
+粘贴 B 站 / 网易云音乐 / QQ 音乐的歌单链接自动解析入队、页面底部跟着一条蓝白频谱。
 
 - **不修改宿主任何文件**：只走宿主公开的扩展点（槽位 / 服务 / 路由）。
 - **浏览器半边零转译**：宿主对插件客户端代码是零转译静态投递，所以全部用 `react.createElement`，不许 JSX 语法。
@@ -13,10 +12,10 @@ DSH Web 界面右下角的音乐台。一枚可拖动的胶囊常驻在那里，
 - **播放**：队列、上一首 / 下一首、进度条拖动、音量旋钮（悬停滚轮可调）、三种循环模式、切歌淡入淡出。
 - **拖入本地音频**：文件拖到卡片上即入队播放，支持 mp3 / wav / ogg / m4a / flac / aac / opus / webm。
 - **粘贴链接**：B 站视频、网易云歌单 / 单曲、QQ 音乐歌单 / 单曲、直链音频；一次可粘多条，混着也行。
-- **内置音景**：卡片里「音景」一排，点开是七条自带 WAV 的 chip（白噪音 / 雨声 / 咖啡馆 / 鼓点循环 / 爵士钢琴 / Lo-Fi / 深夜酒吧），点一条立即无缝循环，不起任何外部请求。
-- **频谱**：圆点 / 粗柱 / 折线 / 波形四种画法，可调柱数、增益、光晕、高度、帧率、贴底通栏或嵌在卡片里。
-- **封面**：内置曲目读预置封面，平台曲目读该曲自己的专辑封面，B 站曲目读视频封面。
-- **设置页**：`设置 → 音乐台`，界面 / 播放 / 频谱 / 网络与缓存 / 收藏与历史五组。
+- **频谱**：圆点 / 粗柱 / 方块阵列 / 对称声波 / 折线 / 时域波形六种画法，可调宽度、柱数、灵敏度、光晕、高度、帧率、层级、贴底通栏或嵌在卡片里。
+- **七套配色主题**：鲸鱼蓝白（默认）、极光青紫、薄荷绿、落日橙、玫瑰粉、霓虹赛博、极简灰白。
+- **封面**：平台曲目读该曲自己的专辑封面，B 站曲目读视频封面。
+- **设置页**：`设置 → 音乐台`，界面 / 外观主题 / 播放 / 链接与歌单 / 频谱五组。
 - **收藏与历史**：设置页里两张表，收藏与最近播放的链接可一键回放。
 
 ## 安装
@@ -119,7 +118,6 @@ dsh-music-on/
 ├── cordis.patch.yml        # bundle patch（顶层必须是 YAML **数组**，见下）
 ├── LICENSE                 # MIT
 ├── README.md / README.en.md
-├── presets/                # 预置音景：manifest.json + 7 个 *.wav（CC0 原创合成）
 ├── scripts/                # 构建与自检（不进安装位置）
 │   ├── build-client.mjs        # esbuild 打 client.js
 │   ├── check-install.mjs       # 安装位置 20 项自检
@@ -127,20 +125,21 @@ dsh-music-on/
 │   ├── simulate-browser.mjs    # vm 里真跑 client.js，验证槽位注册与首渲染
 │   ├── simulate-drag.mjs       # 拖动通道（window 监听）行为验证
 │   ├── submit-marketplace.ps1  # 市场投稿体检 + 开 PR（见下）
+│   ├── sync-install.mjs        # 逐文件哈希比对并同步安装副本（--apply 才写）
 │   ├── shoot-screenshots.py    # Playwright 拍商店截图，顺带当视觉回归
+│   ├── probe-live.py           # 真浏览器验收：频谱几何 / 七套主题 / 设置分区
 │   └── verify-*.mjs            # 实网端到端自检（B站 / 平台直链）
 └── src/
-    ├── index.js            # 宿主半边入口：建票据单例、挂三条路由
-    ├── shared.js           # 跨半边共享常量（PLUGIN_ID / 三条路径 / 槽位 id）
+    ├── index.js            # 宿主半边入口：建票据单例、挂两条路由
+    ├── shared.js           # 跨半边共享常量（PLUGIN_ID / 两条路径 / 槽位 id）
     ├── host/               # 只在 Node 里跑，浏览器拿不到的能力
     │   ├── resolve.js      # 平台链接解析（B站 / 网易云 / QQ / YouTube）
     │   ├── stream.js       # 音频流转发 + 平台票据通道
     │   ├── mediatoken.js   # HMAC 票据签发 / 验签（不透明句柄）
-    │   └── presets-static.js  # presets/*.wav 静态资源路由
     └── client/             # 全部内联进 client.js，禁止相对 require
         ├── register.js     # 槽位注册 + React 桥 + 运行时单例
         ├── engine.js       # 播放引擎（AudioContext 单例、队列、双轨音源）
-        ├── sources.js      # Track 工厂（url / preset / embed / bilibili / platform）
+        ├── sources.js      # Track 工厂（url / embed / bilibili / platform）
         ├── linkintake.js   # 粘贴文本 → 分流 → 入队
         ├── library.js      # 收藏与历史的存储层
         ├── parser.js        # 平台链接识别与 id 提取
@@ -148,14 +147,12 @@ dsh-music-on/
         ├── locale.js       # zh / en 字典
         ├── i18n.js         # 安全翻译层（宿主 t 的插值语义补丁）
         ├── styles.js       # 全部 CSS（类名统一 dmo- 前缀）
-        ├── presets.js       # 预置清单加载
         └── ui/             # 组件（纯 createElement，无 JSX 语法糖）
             ├── ShellDock.js      # 右下角音乐台（胶囊 / 卡片 / 隐藏三态）
-            ├── Spectrum.jsx      # 频谱动画（dots / bars / line / wave）
+            ├── Spectrum.jsx      # 频谱动画（dots / bars / line / wave / blocks / mirror）
             ├── Settings.jsx      # 设置页分区
             ├── LibrarySection.jsx # 设置页里的收藏 / 历史表
-            ├── PlayerPanel.jsx   # 右侧栏标签页形态（保留）
-            └── PresetsSection.jsx
+            └── PlayerPanel.jsx   # 右侧栏标签页形态（保留）
 ```
 
 ---
@@ -166,17 +163,20 @@ dsh-music-on/
 | --- | --- |
 | ![胶囊](docs/screenshot-capsule.png) | ![卡片](docs/screenshot-dock.png) |
 
-![音景](docs/screenshot-soundscapes.png)
+| 底部频谱特写 | 设置页 |
+| --- | --- |
+| ![频谱](docs/screenshot-spectrum.png) | ![设置](docs/screenshot-settings.png) |
 
-三张图都列在 `screenshots.json` 里（商店按它决定展示顺序）。它们由 `scripts/shoot-screenshots.py`（Playwright）从真实 GUI 拍下，所以同时是**视觉回归**：改完 CSS 重拍一遍，哪里漂了一眼就能看出来。
+图都列在 `screenshots.json` 里（商店按它决定展示顺序）。它们由 `scripts/shoot-screenshots.py`（Playwright）从真实 GUI 拍下，所以同时是**视觉回归**：改完 CSS 重拍一遍，哪里漂了一眼就能看出来。
 
-## 三条 HTTP 路由与平台票据通道
+脚本不是空跑截图：它会往卡片上真的派发一次 `drop` 事件，把页面内现场合成的 24 秒 WAV 交给插件，等它自动播放并跑起频谱，再依次拍胶囊、卡片、频谱带、设置页。所以一次跑通本身就是「拖入音频即自动播放」的端到端验证；如果拖放链路坏了，频谱那张会拍成一条平底噪。
+
+## 两条 HTTP 路由与平台票据通道
 
 | 路径 | 挂法 | 存在理由 |
 | --- | --- | --- |
 | `/api/dsh-music-on/resolve` | `connection.fetch.register` | 浏览器直连 B站 / 网易云 / QQ 必被同源策略与 Referer 校验拦下，必须宿主代取 |
 | `/api/dsh-music-on/stream` | `connection.fetch.register` | 让外部音频能进 `AudioContext`，从而拿到真频谱 |
-| `/api/dsh-music-on/presets/` | `webServer.register({kind:'prefix'})` | 静态 WAV；需要自己写 `ServerResponse` 以支持 `Range` |
 
 ### 网易云 / QQ 音乐：为什么不透明票据
 
@@ -328,50 +328,45 @@ c.connection.fetch.register({
 - `ERROR_CODES`：`E_UNSUPPORTED_URL` / `E_RESOLVE_TIMEOUT` / `E_RESOLVE_BLOCKED` / `E_NO_STREAM` / `E_DECODE_FAILED` / `E_BAD_RESPONSE`。
 - **`normalizeUrl()` 对非法输入是抛错，不是返回 null**。调用方一律 try/catch —— 粘一段乱码就炸掉整个入队流程是真实踩过的坑。
 
-## presets（预置音景）
-
-`presets/manifest.json`（14 条）+ 7 个 WAV。
-
-切片规范（`presets/generate-seeds.mjs` 实测值）：**44.1kHz / 16bit / 单声道 / 5.600s**，每条 493,964 字节，循环接缝用 `XFADE_SEC = 0.25` 做的交叉淡化（`makeSeamless`），实测接缝跳变 0.0000。全部 CC0-1.0 原创合成，`sha256` 是脚本实测真值。
-
-`manifest.json` 字段：顶层 `version` / `generatedAt` / `loopCrossfadeSec` / `layers` / `items` / `audioFormat`；条目 `id` / `name` / `nameEn` / `category` / `tags` / `loopStart` / `loopEnd` / `source` / `url` / `pageUrl` / `bvid` / `sha256` / `sizeBytes` / `duration` / `license` / `attribution` / `spectrumAvailable` / `status` / `file`。
-
-注意条目用的字段名是 **`name` 而不是 `title`**。
-
-`source` 三态：
-
-| source | 含义 | 频谱 |
-| --- | --- | --- |
-| `embedded` | 包内 WAV，走 AudioContext | 可用 |
-| `bilibili-embed` | `player.bilibili.com` iframe | 不可用 |
-| `platform-link` | 只做跳转 | 不可用 |
-
-`status` 三态 `ready` / `needs-config` / `unavailable`。**`bvid` 必须填真实公开视频号**，不能编造 —— 编错的后果是打开一片黑，比 `needs-config` 更糟。
-
-新增预置音景：在 `generate-seeds.mjs` 的合成器表里加一项 → 跑脚本重生成 WAV 与 manifest → 跑 `presets/selftest.mjs`（37 项）与 `presets/verify-seeds.mjs`（逐条复核 sha256 / 字节数 / 时长 / 接缝）。静态路由只放行 `.wav` 与裸名 `manifest.json`，WAV 带 `cache-control: public, max-age=31536000, immutable`，manifest 是 `no-store`。
-
 ## spectrum（频谱）
 
 `src/client/ui/Spectrum.jsx` —— 从 `engine.getAnalyser()` 拿 `AnalyserNode`，`getByteFrequencyData` 取数，**不是** OfflineAudioContext。
 
 - `fftSize` 2048；analyser 上不是这个值时由组件显式设定（只读实现上退化为用现有 bin 数）。
-- 对数频段分桶，柱数由设置 `spectrumBars` 控制（8 对齐，16–96）。
+- 对数频段分桶，柱数由设置 `spectrumBars` 控制（8 对齐，16–160）。
+- **宽度由 `spectrumSpan` 控制（20–100%，按 5 对齐）**。外壳把它算成像素注入 `--dmo-span`，`.dmo-barspectrum` 用 `left: calc((100% - var(--dmo-span)) / 2)` 居中 —— `left` 与 `width` 必须成对写，同时留 `right` 会让 `width` 被忽略、带子永远满宽。
 - **analyser 是懒绑定的**：音频图要到首次播放才建，首次渲染时 `getAnalyser()` 必然返回 null。组件每 500ms 重试一次（`ANALYSER_PROBE_MS`），绑上就不再探。早期版本只在挂载时取一次，于是频谱永远是呼吸基线 —— 这就是「频谱消失」的真因。
-- 四种绘制：`dots`（默认，蓝白细圆点）/ `bars`（柱状）/ `line` / `wave`；`off` 直接 `return null`，**完全不创建 canvas 与动画循环**。
+- 六种绘制，全部有真实实现（不存在「选项里有、代码里没画」）：`dots`（默认，蓝白细柱 + 底噪圆点 + 白色峰值点）/ `bars`（粗柱）/ `blocks`（方块阵列）/ `mirror`（对称声波）/ `line`（折线）/ `wave`（时域波形）；`off` 直接 `return null`，**完全不创建 canvas 与动画循环**。
+- `dots` 的几何契约：n 根柱 + (n−1) 个缝精确等于容器宽（`total === width`，误差 < 0.01px），柱宽夹在 2–16px，圆角恒为柱宽的一半。`dotLayout()` 是纯函数，`check-spectrum.mjs` 用 7 组宽度锁死这条。
 - 峰值每帧回落 `-0.6`（以 60fps 为基准按实际 `dt` 缩放），永不低于当前值。
 - 帧率由 `spectrumFps` 控制；`prefers-reduced-motion: reduce` 时降到 **10fps 而不是让频谱消失**。
 - 双通道暂停：`IntersectionObserver` + `visibilitychange`。
-- 配色从 CSS 变量读（`getComputedStyle(canvas)` 继承）：`--dmo-spec-base/low/high/glow`，定义在 `.dmo-dock-stack` 上，深浅主题各一套。
-- 几何自检：`node scripts/check-spectrum.mjs`（27 项，含 6 组容器宽度下的柱宽/间距/圆角/整排宽度）。
+- 配色从 CSS 变量读（`getComputedStyle(canvas)` 继承）：`--dmo-spec-base/low/high/glow`，定义在 `.dmo-dock-stack` 上，每套主题各一份。
+- 几何自检：`node scripts/check-spectrum.mjs`（27 项，含 7 组容器宽度下的柱宽/间距/圆角/整排宽度）。
 
-## 视觉语言（蓝白鲸鱼娘）
+## 视觉语言与主题
 
-配色令牌全部落在 `.dmo-dock-stack` 与 `.dmo-settings` 两个作用域里，**不在 `:root`**，避免污染宿主：`--dmo-brand`(#4d6bfe) / `--dmo-brand-soft` / `--dmo-brand-deep` / `--dmo-glass` / `--dmo-edge` / `--dmo-halo` / `--dmo-spec-*`。
+配色令牌全部落在 `.dmo-dock-stack` 与 `.dmo-settings` 两个作用域里，**不在 `:root`**，避免污染宿主。锚点必须挂在 `.dmo-dock-stack` 上，因为胶囊是 `.dmo-card` 的**兄弟节点** —— 只挂 card 上继承不到，静默回落兜底色。
+
+七套主题由 `:where([data-dmo-theme='…'])` 块切换，每套覆盖四组变量：
+
+| 主题 | id | 主色 |
+| --- | --- | --- |
+| 鲸鱼蓝白（默认） | `whale` | `#4d6bfe` |
+| 极光青紫 | `aurora` | `#5c8cff` / 柔 `#9f7bff` |
+| 薄荷绿 | `mint` | `#23b98a` |
+| 落日橙 | `sunset` | `#f5863c` |
+| 玫瑰粉 | `rose` | `#e85a8c` |
+| 霓虹赛博 | `neon` | `#00d2be` |
+| 极简灰白 | `mono` | `#6b7280` |
+
+每组都含 `--dmo-rgb`（RGB 三元组，供 `rgba(var(--dmo-rgb), α)` 复用）、`--dmo-brand` 三档、`--dmo-glass` 两档、`--dmo-spec-base/low/high/glow` 四档。`--dmo-rgb` 是拆出来的：只给一个 `--dmo-brand` 没法做 `--dmo-line` / `--dmo-halo` 这类半透明派生色。
 
 铁律：
 - 卡片与设置分区必须自带前景与底色锚点（`--dmo-fg*` / `--dmo-glass`）。直接用宿主的 `--dsw-alias-label-primary` 会在浅色主题下变成白字白底 —— 因为宿主的 label 随主题翻转，而我们的玻璃底不翻转。
 - 深色反转必须写两块：`@media (prefers-color-scheme: dark)` 兜底 + `:where([data-theme='dark'], …)`，且后者排在**后面**靠同权重后出现者胜出。
-- `test/theme-contrast.test.mjs` 锁住以上三条（含「卡片子树不得直接消费宿主 label 族变量」）。
+- 主题作用域必须覆盖到设置分区（`data-dmo-theme` 同时挂在 `.dmo-dock-stack` 与 `.dmo-settings` 上），否则切了主题卡片变色、设置页还是旧的蓝白。
+- `test/theme-contrast.test.mjs` 锁住以上几条（含「卡片子树不得直接消费宿主 label 族变量」）。
 
 ## 走带与音量（长条是进度，音量是旋钮）
 
@@ -461,11 +456,18 @@ node scripts\simulate-drag.mjs
 node scripts\verify-bilibili.mjs
 node scripts\verify-platform.mjs
 
-# 5) 安装位置自检
+# 5) 同步到安装位置（先看差异，--apply 才写）
+node scripts\sync-install.mjs
+node scripts\sync-install.mjs --apply
+
+# 6) 安装位置自检
 node scripts\check-install.mjs
 
-# 6) 频谱几何自检（27 项）
+# 7) 频谱几何自检（27 项）
 node scripts\check-spectrum.mjs
+
+# 8) 真浏览器验收（需要 GUI 在 127.0.0.1:3080 起着）
+python scripts\probe-live.py
 ```
 
-**同步到安装位置必须逐文件 `Copy-Item` + `Get-FileHash` 比对**：`file:` 依赖在 node_modules 下是**实体目录副本**（不是 junction/symlink），`Copy-Item -Recurse` 会造出 `src\src`、`presets\presets` 嵌套重复。改完纯客户端只需 `Ctrl+F5`；改了 `src/host/*` 必须重启 DSH。
+**同步到安装位置**：`file:` 依赖在 node_modules 下是**实体目录副本**（不是 junction/symlink），改源码不会自动生效。用 `node scripts\sync-install.mjs` 先看差异、`--apply` 才写，它按 sha256 逐文件比对并报告安装副本里的多余文件。**绝不要 `Copy-Item -Recurse`** —— 会造出 `src\src` 这类嵌套重复。改完纯客户端只需 `Ctrl+F5`；改了 `src/host/*` 必须重启 DSH。

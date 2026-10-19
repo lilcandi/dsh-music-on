@@ -25,15 +25,34 @@ export const STORAGE_KEY = 'dsh-music-on:settings';
  * 四者必须都有真实绘制实现：早先 `wave` 只在白名单里、绘制函数退回柱状，
  * 选了等于没选，属于「选项撒谎」。
  */
-export const SPECTRUM_STYLES = ['dots', 'bars', 'line', 'wave', 'off'];
+export const SPECTRUM_STYLES = ['dots', 'bars', 'line', 'wave', 'blocks', 'mirror', 'off'];
 export const SPECTRUM_FPS = [30, 60];
 export const SPECTRUM_PLACEMENTS = ['bar', 'panel'];
 /** 通栏频谱的层级：front 浮在正文之上，back 沉到正文之下只透暗纹。 */
 export const SPECTRUM_DEPTHS = ['front', 'back'];
 export const SPECTRUM_GLOWS = ['off', 'soft', 'strong'];
+/**
+ * 频谱铺开宽度（占视口百分比）。
+ *
+ * 之前没有这项，柱子按「2-4px 柱宽 + 1.5-2px 缝」硬算，48 柱在 1440px 屏上只占
+ * 286px 居中一条 —— 用户的原话是「频谱太短」。下限 20% 是「再小还不如关掉」，
+ * 上限 100% 是满铺。真正让它铺满还要柱宽随槽位放大（见 Spectrum.dotLayout）。
+ */
+export const SPECTRUM_SPAN_MIN = 20;
+export const SPECTRUM_SPAN_MAX = 100;
+/** 柱数上限：96 柱在 1440px 上仍嫌稀，抬到 160 才够细密。 */
+export const SPECTRUM_BARS_MIN = 16;
+export const SPECTRUM_BARS_MAX = 160;
+
+/**
+ * 配色主题。
+ *
+ * 每一项只换一组 CSS 自定义属性（--dmo-brand 族 + --dmo-spec 族），
+ * 结构、布局、字体一概不动 —— 主题只该改颜色，改布局的叫「尺寸」。
+ * `whale` 是默认的 DeepSeek 鲸鱼蓝白。
+ */
+export const THEMES = ['whale', 'aurora', 'mint', 'sunset', 'rose', 'neon', 'mono'];
 export const LOOP_MODES = ['all', 'one', 'off'];
-export const CACHE_LIMIT_MIN_MB = 64;
-export const CACHE_LIMIT_MAX_MB = 4096;
 export const DOCK_SIZES = ['compact', 'normal', 'wide'];
 export const AUTOPLAY_TARGETS = ['both', 'link', 'file', 'off'];
 
@@ -54,12 +73,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
   spectrumPlacement: 'bar',
   spectrumDepth: 'front',
   spectrumBars: 48,
+  /** 频谱横向铺开宽度，占视口百分比。80 = 铺满八成，两侧各留一成。 */
+  spectrumSpan: 80,
   spectrumGlow: 'soft',
   spectrumGain: 1,
   spectrumHeight: 64,
+  /** 配色主题：只换颜色，不动布局。whale 是 DeepSeek 鲸鱼蓝白。 */
+  theme: 'whale',
   loopMode: 'all',
-  cacheLimitMB: 512,
-  proxyEnabled: true,
   allowAutoplay: true,
   autoplayTarget: 'both',
   crossfadeSec: 0,
@@ -94,17 +115,19 @@ export const SETTINGS_SCHEMA = Object.freeze([
   {
     key: 'spectrumStyle',
     kind: 'select',
-    type: "SpectrumStyle = 'dots' | 'bars' | 'line' | 'wave' | 'off'",
+    type: "SpectrumStyle = 'dots' | 'bars' | 'line' | 'wave' | 'blocks' | 'mirror' | 'off'",
     default: DEFAULT_SETTINGS.spectrumStyle,
     options: [
       { value: 'dots', label: '圆点（蓝白）' },
       { value: 'bars', label: '粗柱' },
+      { value: 'blocks', label: '方块阵列' },
+      { value: 'mirror', label: '对称声波' },
       { value: 'line', label: '折线' },
-      { value: 'wave', label: '波形' },
+      { value: 'wave', label: '时域波形' },
       { value: 'off', label: '关闭' },
     ],
     label: '频谱样式',
-    help: '关闭后完全不创建 canvas 与动画循环，最省电。',
+    help: '七种样式都有真实绘制实现。关闭后完全不创建 canvas 与动画循环，最省电。',
   },
   {
     key: 'spectrumFps',
@@ -145,13 +168,24 @@ export const SETTINGS_SCHEMA = Object.freeze([
   {
     key: 'spectrumBars',
     kind: 'range',
-    type: 'number (16-96)',
+    type: 'number (16-160)',
     default: DEFAULT_SETTINGS.spectrumBars,
-    min: 16,
-    max: 96,
+    min: SPECTRUM_BARS_MIN,
+    max: SPECTRUM_BARS_MAX,
     step: 8,
     label: '频谱柱数',
-    help: '柱子越多越细腻，代价是每帧绘制量线性增长。',
+    help: '柱子越多越细腻，代价是每帧绘制量线性增长。要与「频谱宽度」一起调：宽铺 + 柱多才是满屏细密频谱。',
+  },
+  {
+    key: 'spectrumSpan',
+    kind: 'range',
+    type: 'number (20-100)',
+    default: DEFAULT_SETTINGS.spectrumSpan,
+    min: SPECTRUM_SPAN_MIN,
+    max: SPECTRUM_SPAN_MAX,
+    step: 5,
+    label: '频谱宽度 (%)',
+    help: '整条频谱占窗口宽度的比例。之前它只有固定 286px，看起来像一小撮；调到 100 就是满铺。',
   },
   {
     key: 'spectrumGain',
@@ -180,13 +214,30 @@ export const SETTINGS_SCHEMA = Object.freeze([
   {
     key: 'spectrumHeight',
     kind: 'range',
-    type: 'number (32-160)',
+    type: 'number (32-200)',
     default: DEFAULT_SETTINGS.spectrumHeight,
     min: 32,
-    max: 160,
+    max: 200,
     step: 8,
     label: '频谱高度 (px)',
     help: '贴底通栏与嵌入两种位置都按这个高度渲染。',
+  },
+  {
+    key: 'theme',
+    kind: 'select',
+    type: "Theme = 'whale' | 'aurora' | 'mint' | 'sunset' | 'rose' | 'neon' | 'mono'",
+    default: DEFAULT_SETTINGS.theme,
+    options: [
+      { value: 'whale', label: '鲸鱼蓝白（默认）' },
+      { value: 'aurora', label: '极光青紫' },
+      { value: 'mint', label: '薄荷绿' },
+      { value: 'sunset', label: '落日橙' },
+      { value: 'rose', label: '玫瑰粉' },
+      { value: 'neon', label: '霓虹赛博' },
+      { value: 'mono', label: '极简灰白' },
+    ],
+    label: '配色主题',
+    help: '只换颜色，不动布局与尺寸。卡片、胶囊、频谱、设置分区会一起换。',
   },
   {
     key: 'loopMode',
@@ -200,25 +251,6 @@ export const SETTINGS_SCHEMA = Object.freeze([
     ],
     label: '默认循环模式',
     help: '仅作为新会话的初始值，播放器上的按钮仍可临时切换。',
-  },
-  {
-    key: 'cacheLimitMB',
-    kind: 'range',
-    type: 'number (64-4096)',
-    default: DEFAULT_SETTINGS.cacheLimitMB,
-    min: CACHE_LIMIT_MIN_MB,
-    max: CACHE_LIMIT_MAX_MB,
-    step: 64,
-    label: '缓存上限 (MB)',
-    help: '音景文件本地缓存的总容量上限，超出后按最近最少使用淘汰。',
-  },
-  {
-    key: 'proxyEnabled',
-    kind: 'boolean',
-    type: 'boolean',
-    default: DEFAULT_SETTINGS.proxyEnabled,
-    label: '平台代理下载',
-    help: '关掉后只使用随插件分发的 seed 音景，不发起任何额外网络请求。',
   },
   {
     key: 'allowAutoplay',
@@ -374,20 +406,21 @@ export function normalizeSettings(input) {
   const spectrumDepth = SPECTRUM_DEPTHS.includes(raw.spectrumDepth)
     ? raw.spectrumDepth
     : DEFAULT_SETTINGS.spectrumDepth;
-  const cacheLimitMB = toNumber(
-    raw.cacheLimitMB,
-    DEFAULT_SETTINGS.cacheLimitMB,
-    CACHE_LIMIT_MIN_MB,
-    CACHE_LIMIT_MAX_MB,
-  );
-  const spectrumBars = Math.round(toNumber(raw.spectrumBars, DEFAULT_SETTINGS.spectrumBars, 16, 96) / 8) * 8;
+  const spectrumBars = Math.round(
+    toNumber(raw.spectrumBars, DEFAULT_SETTINGS.spectrumBars, SPECTRUM_BARS_MIN, SPECTRUM_BARS_MAX) / 8,
+  ) * 8;
+  // 宽度按 5 对齐：滑杆 step=5，落出个 63 会让滑杆显示与真实值错开。
+  const spectrumSpan = Math.round(
+    toNumber(raw.spectrumSpan, DEFAULT_SETTINGS.spectrumSpan, SPECTRUM_SPAN_MIN, SPECTRUM_SPAN_MAX) / 5,
+  ) * 5;
   const spectrumGain = roundTo(
     toNumber(raw.spectrumGain, DEFAULT_SETTINGS.spectrumGain, 0.5, 4),
     0.1,
   );
   const spectrumHeight = Math.round(
-    toNumber(raw.spectrumHeight, DEFAULT_SETTINGS.spectrumHeight, 32, 160) / 8,
+    toNumber(raw.spectrumHeight, DEFAULT_SETTINGS.spectrumHeight, 32, 200) / 8,
   ) * 8;
+  const theme = THEMES.includes(raw.theme) ? raw.theme : DEFAULT_SETTINGS.theme;
   const spectrumGlow = SPECTRUM_GLOWS.includes(raw.spectrumGlow)
     ? raw.spectrumGlow
     : DEFAULT_SETTINGS.spectrumGlow;
@@ -412,12 +445,12 @@ export function normalizeSettings(input) {
     spectrumPlacement,
     spectrumDepth,
     spectrumBars,
+    spectrumSpan,
     spectrumGain,
     spectrumGlow,
     spectrumHeight,
+    theme,
     loopMode,
-    cacheLimitMB: Math.round(cacheLimitMB),
-    proxyEnabled: toBool(raw.proxyEnabled, DEFAULT_SETTINGS.proxyEnabled),
     allowAutoplay: toBool(raw.allowAutoplay, DEFAULT_SETTINGS.allowAutoplay),
     autoplayTarget,
     crossfadeSec,

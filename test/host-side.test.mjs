@@ -87,14 +87,11 @@ check('导出 name 与包名一致', () => host.name === pkg.name);
 check('inject 声明了 connection', () => Array.isArray(host.inject) && host.inject.includes('connection'));
 check('default 导出带 name/apply', () => host.default && typeof host.default.apply === 'function');
 
-/* ---------- 3. apply 干跑：三条路由都要挂上 ---------- */
+/* ---------- 3. apply 干跑：两条路由都要挂上 ---------- */
 
 /** connection.fetch 注册到的路由（resolve / stream）。 */
 /** @type {Array<{path: string, methods: string[], requestBody: string}>} */
 const routes = [];
-/** webServer 注册到的路由（presets 静态资源），契约与上者不同。 */
-/** @type {Array<{kind: string, path: string, handler: Function}>} */
-const webRoutes = [];
 
 const fakeCtx = {
   inject(_deps, cb) {
@@ -113,14 +110,6 @@ const fakeCtx = {
       },
     },
   },
-  // presets 走 webServer 而不是 connection.fetch：它要自己写 ServerResponse
-  // 才能支持 Range（WAV 由 <audio> 拉取，Chrome 先发 Range: bytes=0-）。
-  webServer: {
-    register(route) {
-      webRoutes.push(route);
-      return () => {};
-    },
-  },
 };
 
 check('apply 在假 ctx 上执行不抛错', () => {
@@ -129,14 +118,6 @@ check('apply 在假 ctx 上执行不抛错', () => {
 });
 
 check('connection.fetch 注册了且仅注册了两条路由', () => routes.length === 2);
-check('webServer 注册了一条预置资源路由', () => webRoutes.length === 1);
-check('预置路由是 prefix 且路径正确', () => {
-  const [route] = webRoutes;
-  if (route.kind !== 'prefix') throw new Error(`kind 应为 prefix，实际 ${route.kind}`);
-  if (route.path !== '/api/dsh-music-on/presets') throw new Error(`路径错: ${route.path}`);
-  return true;
-});
-check('预置路由带 handler 且是函数', () => typeof webRoutes[0].handler === 'function');
 check('两条路由路径正确', () => {
   const want = ['/api/dsh-music-on/resolve', '/api/dsh-music-on/stream'];
   const got = routes.map((r) => r.path).sort();

@@ -372,9 +372,12 @@ check('保留行为契约常量与调用点', () => {
   return `${required.length} 处契约片段在位`;
 });
 
-check("settings.spectrumStyle 枚举含 dots/wave/off", () => {
-  assert(source.includes("const STYLE_VALUES = ['dots', 'bars', 'line', 'wave', 'off'];"), '缺少样式枚举');
-  return 'dots | bars | line | wave | off';
+check('settings.spectrumStyle 枚举含全部七种样式', () => {
+  assert(
+    source.includes("const STYLE_VALUES = ['dots', 'bars', 'line', 'wave', 'blocks', 'mirror', 'off'];"),
+    '缺少样式枚举（dots/bars/line/wave/blocks/mirror/off）',
+  );
+  return 'dots | bars | line | wave | blocks | mirror | off';
 });
 
 /* ---------------- 真语法检查 ---------------- */
@@ -411,6 +414,7 @@ globalThis.__dmoReactHarness__ = {
 
 const mod = await import(pathToFileURL(tempModule).href);
 const { Spectrum, dotLayout } = mod;
+const MOD_DOT_W_MAX = mod.__test.constants.DOT_W_MAX;
 
 /**
  * 挂载一次：渲染 → 建假 DOM（填 ref）→ 跑 effect → 返回记录上下文。
@@ -606,14 +610,14 @@ check('spectrumBars: 32 → 实际画 32 根柱', () => {
   return `每帧 32 根，pitch=${pitch.toFixed(2)}px`;
 });
 
-check('spectrumBars 归一化：夹 16-96 并 8 对齐', () => {
+check('spectrumBars 归一化：夹 16-160 并 8 对齐', () => {
   const { normalizeBarCount } = mod;
   assertEqual(normalizeBarCount(32), 32, '32 应保持');
   assertEqual(normalizeBarCount(undefined), 48, '缺省应回 48');
   assertEqual(normalizeBarCount(1), 16, '下界应夹到 16');
-  assertEqual(normalizeBarCount(999), 96, '上界应夹到 96');
+  assertEqual(normalizeBarCount(999), 160, '上界应夹到 160（满铺需要更细密）');
   assertEqual(normalizeBarCount(50), 48, '50 应对齐到 48');
-  return '16 / 48 / 96 全部正确';
+  return '16 / 48 / 160 全部正确';
 });
 
 // ---- 3.4 style off ----
@@ -771,19 +775,23 @@ for (const width of [128, 320, 420, 960, 1440]) {
   note(`320px × 96 柱 → 柱宽 ${layout.barW.toFixed(2)}px · 间距 ${layout.gap.toFixed(2)}px · pitch ${layout.step.toFixed(2)}px · 整排 ${layout.total.toFixed(1)}px`);
 }
 
-check('dots 几何：柱宽 2-4px、圆角 = 柱宽/2、正常容器缝 1.5-2px、永不重叠', () => {
-  const cases = [[128, 16], [320, 48], [320, 96], [420, 48], [960, 48], [1440, 96]];
+check('dots 几何：整排铺满容器、柱宽 ≤ 槽位一半、圆角 = 柱宽/2、永不重叠', () => {
+  const cases = [[128, 16], [320, 48], [320, 96], [420, 48], [960, 48], [1440, 96], [1440, 160]];
   for (const [width, bars] of cases) {
     const layout = dotLayout(width, bars);
-    assert(layout.barW >= 2 - 1e-9 && layout.barW <= 4 + 1e-9, `${width}px/${bars} 柱宽越界：${layout.barW}`);
+    assert(layout.barW >= 1 - 1e-9, `${width}px/${bars} 柱宽过窄：${layout.barW}`);
+    assert(layout.barW <= MOD_DOT_W_MAX + 1e-9, `${width}px/${bars} 柱宽越界：${layout.barW}`);
     assert(layout.step >= layout.barW + 0.5 - 1e-9, `${width}px/${bars} 相邻柱重叠：pitch ${layout.step} barW ${layout.barW}`);
-    assert(layout.x0 >= 0, `${width}px/${bars} 起始 x 为负`);
-    const roomy = layout.slot >= 3.5;
-    if (roomy) {
-      assert(layout.gap >= 1.5 - 1e-9 && layout.gap <= 2 + 1e-9, `${width}px/${bars} 缝越界：${layout.gap}`);
+    assertEqual(layout.x0, 0, `${width}px/${bars} 必须从左边起铺，不再居中`);
+    // 铺满是这次改版的核心契约：n 根柱 + (n-1) 个缝必须精确等于容器宽。
+    if (layout.slot >= 4) {
+      assert(
+        Math.abs(layout.total - width) < 0.01,
+        `${width}px/${bars} 没有铺满：整排 ${layout.total.toFixed(2)} vs 容器 ${width}`,
+      );
     }
   }
-  return `${cases.length} 组宽度全部合规`;
+  return `${cases.length} 组宽度全部铺满且不重叠`;
 });
 
 /* ---------------- 收尾 ---------------- */

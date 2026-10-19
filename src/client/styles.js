@@ -88,7 +88,7 @@ export const CSS_TEXT = `
   right: 8px;
   bottom: 6px;
   padding: 1px 7px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 999px;
   background: var(--dmo-glass, rgba(255, 255, 255, 0.94));
   color: var(--dmo-fg-dim, #45557a);
@@ -164,7 +164,7 @@ export const CSS_TEXT = `
 }
 .dmo-row:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, .12)); }
 .dmo-row.dmo-active {
-  background: var(--dsw-alias-interactive-bg-selected, rgba(77, 107, 254, .14));
+  background: var(--dsw-alias-interactive-bg-selected, rgba(var(--dmo-rgb, 77, 107, 254), .14));
   border-color: var(--dmo-line);
 }
 .dmo-row-glyph {
@@ -330,14 +330,14 @@ export const CSS_TEXT = `
   gap: 9px;
   max-width: 340px;
   padding: 7px 11px 7px 8px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 999px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(236, 244, 255, 0.72)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(var(--dmo-glass-tint, 236, 244, 255), 0.72)),
     var(--dmo-glass, rgba(255, 255, 255, 0.94));
   box-shadow:
-    0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26)),
-    0 10px 26px rgba(38, 74, 176, 0.22),
+    0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26)),
+    0 10px 26px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
   color: var(--dmo-fg, #16233f);
   font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -353,8 +353,8 @@ export const CSS_TEXT = `
 .dmo-capsule:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 0 0 4px var(--dmo-halo, rgba(77, 107, 254, 0.3)),
-    0 14px 32px rgba(38, 74, 176, 0.28),
+    0 0 0 4px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.3)),
+    0 14px 32px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
@@ -362,8 +362,8 @@ export const CSS_TEXT = `
   /* 拖动时不能再用位移做「按下」反馈：那会把胶囊整体挪 1px 而 box 没动，
    * 视觉上像被卡住。改成收紧光晕。 */
   box-shadow:
-    0 0 0 2px var(--dmo-halo, rgba(77, 107, 254, 0.22)),
-    0 4px 12px rgba(38, 74, 176, 0.2);
+    0 0 0 2px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.22)),
+    0 4px 12px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.2);
 }
 
 /* 拖动中：禁用 hover/active 的位移动画，避免与 left/top 的实时位移打架 */
@@ -431,7 +431,7 @@ export const CSS_TEXT = `
   flex: none;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, var(--dmo-brand-deep, #2f4bd8) 0 26%, transparent 27%),
               conic-gradient(from 210deg, #4d6bfe, #7b95ff, #b9cbff, #4d6bfe);
@@ -460,11 +460,11 @@ export const CSS_TEXT = `
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   background:
     repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px 3px),
     radial-gradient(circle at 50% 50%, #2b3f74 0 30%, #131c33 31% 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(38, 74, 176, 0.3);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.3);
   overflow: hidden;
 }
 
@@ -494,7 +494,7 @@ export const CSS_TEXT = `
   padding: 0;
   font-size: 0;
   border-color: var(--dmo-brand-deep, #2f4bd8);
-  box-shadow: 0 0 0 2px var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  box-shadow: 0 0 0 2px var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-vinyl-label {
@@ -505,7 +505,7 @@ export const CSS_TEXT = `
   justify-content: center;
   width: 13px;
   height: 13px;
-  border: 1px solid rgba(47, 75, 216, 0.85);
+  border: 1px solid rgba(var(--dmo-rgb-deeper, 47, 75, 216), 0.85);
   border-radius: 50%;
   background: conic-gradient(from 210deg, #2f4bd8, #4d6bfe, #9fb6ff, #4d6bfe, #2f4bd8);
   color: transparent;
@@ -562,8 +562,8 @@ export const CSS_TEXT = `
 .dmo-dock[data-dragging='1'] .dmo-capsule,
 .dmo-dock[data-dragging='1'] .dmo-card {
   box-shadow:
-    0 0 0 5px var(--dmo-halo, rgba(77, 107, 254, 0.3)),
-    0 24px 52px rgba(38, 74, 176, 0.34);
+    0 0 0 5px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.3)),
+    0 24px 52px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.34);
 }
 
 /* ---------- 展开卡片里的黑胶舞台 ---------- */
@@ -676,7 +676,7 @@ export const CSS_TEXT = `
   flex: none;
   width: 22px;
   height: 22px;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.6);
   color: var(--dmo-fg-dim, #45557a);
@@ -694,7 +694,7 @@ export const CSS_TEXT = `
   border-color: transparent;
   color: #fff;
   opacity: 1;
-  box-shadow: 0 2px 10px rgba(77, 107, 254, 0.45);
+  box-shadow: 0 2px 10px rgba(var(--dmo-rgb, 77, 107, 254), 0.45);
 }
 
 .dmo-capsule-btn {
@@ -711,13 +711,13 @@ export const CSS_TEXT = `
   font-size: 10px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 3px 12px rgba(77, 107, 254, 0.42);
+  box-shadow: 0 3px 12px rgba(var(--dmo-rgb, 77, 107, 254), 0.42);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .dmo-capsule-btn:hover {
   transform: scale(1.06);
-  box-shadow: 0 4px 16px rgba(77, 107, 254, 0.55);
+  box-shadow: 0 4px 16px rgba(var(--dmo-rgb, 77, 107, 254), 0.55);
 }
 
 .dmo-capsule-dot {
@@ -886,13 +886,23 @@ export const CSS_TEXT = `
  */
 .dmo-dock-stack,
 .dmo-card,
-.dmo-embed {
+.dmo-embed,
+.dmo-settings {
+  /* 主题色三元组：整套 rgba(...) 都从这里派生，切换主题只换这一个值。
+   * 之所以要拆出 RGB 三元组而不是只给一个 --dmo-brand：#dmo-line / --dmo-halo
+   * 这类半透明层需要同一个色相配不同 alpha，CSS 没法给十六进制加透明度。 */
+  --dmo-rgb: 77, 107, 254;
+  --dmo-rgb-deep: 38, 74, 176;
+  --dmo-rgb-deeper: 47, 75, 216;
+  --dmo-glass-tint: 236, 244, 255;
+  --dmo-glass-tint-2: 232, 241, 255;
+
   --dmo-fg: #16233f;
   --dmo-fg-dim: #45557a;
   --dmo-fg-faint: #5a6c92;
-  --dmo-line: rgba(77, 107, 254, 0.18);
-  --dmo-hover: rgba(77, 107, 254, 0.08);
-  --dmo-sunken: rgba(77, 107, 254, 0.06);
+  --dmo-line: rgba(var(--dmo-rgb), 0.18);
+  --dmo-hover: rgba(var(--dmo-rgb), 0.08);
+  --dmo-sunken: rgba(var(--dmo-rgb), 0.06);
 
   /* 鲸鱼娘主题的专用色板（蓝白） */
   --dmo-brand: #4d6bfe;
@@ -900,13 +910,13 @@ export const CSS_TEXT = `
   --dmo-brand-deep: #2f4bd8;
   --dmo-glass: rgba(255, 255, 255, 0.94);
   --dmo-glass-2: rgba(243, 248, 255, 0.97);
-  --dmo-edge: rgba(77, 107, 254, 0.28);
-  --dmo-edge-strong: rgba(77, 107, 254, 0.5);
-  --dmo-halo: rgba(77, 107, 254, 0.26);
+  --dmo-edge: rgba(var(--dmo-rgb), 0.28);
+  --dmo-edge-strong: rgba(var(--dmo-rgb), 0.5);
+  --dmo-halo: rgba(var(--dmo-rgb), 0.26);
 
   /* 频谱色板：canvas 通过 getComputedStyle(canvas) 继承读取，所以必须挂在
    * 会包住 canvas 的容器上（.dmo-dock-stack 包胶囊/卡片/通栏频谱三者）。
-   * 蓝白主调：底噪淡蓝 → 柱底中蓝 → 柱顶近白，光晕取高饱和蓝。 */
+   * 底噪淡色 → 柱底中色 → 柱顶近白，光晕取高饱和同色相。 */
   --dmo-spec-base: rgba(150, 200, 255, 0.32);
   --dmo-spec-low: rgba(120, 180, 255, 0.58);
   --dmo-spec-high: rgba(255, 255, 255, 0.98);
@@ -914,27 +924,151 @@ export const CSS_TEXT = `
   color: var(--dmo-fg);
 }
 
-/* 系统级深色兜底（宿主未显式声明主题时生效） */
+/* ---------- 配色主题 ----------
+ *
+ * 每一块只覆盖颜色令牌，结构/间距/字号一概不动 —— 主题只该改颜色。
+ * 顺序要求：必须排在 .dmo-dock-stack 默认块之后、深色块**之前**。
+ * 放深色块之后会把「深色下该用深玻璃」这件事一起盖掉，卡片在深色界面上
+ * 变成一张刺眼的白纸。
+ *
+ * 这里**不能**用 :where() 包起来。早期写成 :where([data-dmo-theme='x'])，
+ * 结果是括号内权重被压到 0，主题块永远输给上面权重 (0,1,0) 的默认块 ——
+ * 七套主题算出来的计算样式完全一致，换主题视觉上毫无变化（真机实测复现）。
+ * 现在用普通属性选择器，与默认块同权 (0,1,0)，靠「排在后面」胜出；
+ * 卡片里更具体的选择器（例如 .dmo-x.dmo-y）仍然能盖过主题。
+ */
+[data-dmo-theme='whale'] {
+  /* 默认主题：与上方锚点同值。写全是为了让「七套主题都自带完整令牌」成为
+   * 可断言的事实 —— 只有 --dmo-rgb 的块会让测试与实际渲染产生分歧。 */
+  --dmo-rgb: 77, 107, 254;
+  --dmo-brand: #4d6bfe;
+}
+
+[data-dmo-theme='aurora'] {
+  --dmo-rgb: 92, 140, 255;
+  --dmo-rgb-deep: 52, 70, 190;
+  --dmo-rgb-deeper: 70, 96, 220;
+  --dmo-glass-tint: 232, 240, 255;
+  --dmo-glass-tint-2: 228, 236, 255;
+  --dmo-brand: #5c8cff;
+  --dmo-brand-soft: #9f7bff;
+  --dmo-brand-deep: #3a4fd8;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(240, 245, 255, 0.97);
+  --dmo-spec-base: rgba(130, 200, 255, 0.32);
+  --dmo-spec-low: rgba(130, 170, 255, 0.6);
+  --dmo-spec-high: rgba(226, 240, 255, 0.98);
+  --dmo-spec-glow: rgba(140, 150, 255, 0.75);
+}
+
+[data-dmo-theme='mint'] {
+  --dmo-rgb: 40, 180, 140;
+  --dmo-rgb-deep: 16, 110, 84;
+  --dmo-rgb-deeper: 18, 138, 99;
+  --dmo-glass-tint: 232, 252, 244;
+  --dmo-glass-tint-2: 226, 249, 239;
+  --dmo-brand: #23b98a;
+  --dmo-brand-soft: #6fe0b6;
+  --dmo-brand-deep: #128a63;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(240, 253, 248, 0.97);
+  --dmo-spec-base: rgba(140, 235, 200, 0.32);
+  --dmo-spec-low: rgba(80, 215, 170, 0.6);
+  --dmo-spec-high: rgba(240, 255, 250, 0.98);
+  --dmo-spec-glow: rgba(60, 220, 170, 0.72);
+}
+
+[data-dmo-theme='sunset'] {
+  --dmo-rgb: 245, 138, 60;
+  --dmo-rgb-deep: 150, 68, 16;
+  --dmo-rgb-deeper: 209, 96, 28;
+  --dmo-glass-tint: 255, 240, 226;
+  --dmo-glass-tint-2: 255, 234, 216;
+  --dmo-brand: #f5863c;
+  --dmo-brand-soft: #ffb26b;
+  --dmo-brand-deep: #d1601c;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(255, 247, 240, 0.97);
+  --dmo-spec-base: rgba(255, 190, 140, 0.32);
+  --dmo-spec-low: rgba(255, 150, 90, 0.6);
+  --dmo-spec-high: rgba(255, 245, 230, 0.98);
+  --dmo-spec-glow: rgba(255, 150, 70, 0.72);
+}
+
+[data-dmo-theme='rose'] {
+  --dmo-rgb: 232, 90, 140;
+  --dmo-rgb-deep: 140, 36, 74;
+  --dmo-rgb-deeper: 194, 58, 107;
+  --dmo-glass-tint: 255, 236, 244;
+  --dmo-glass-tint-2: 255, 230, 240;
+  --dmo-brand: #e85a8c;
+  --dmo-brand-soft: #ff8fb5;
+  --dmo-brand-deep: #c23a6b;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(255, 245, 249, 0.97);
+  --dmo-spec-base: rgba(255, 180, 210, 0.32);
+  --dmo-spec-low: rgba(255, 120, 175, 0.6);
+  --dmo-spec-high: rgba(255, 246, 250, 0.98);
+  --dmo-spec-glow: rgba(255, 110, 170, 0.72);
+}
+
+[data-dmo-theme='neon'] {
+  --dmo-rgb: 0, 210, 190;
+  --dmo-rgb-deep: 0, 70, 90;
+  --dmo-rgb-deeper: 0, 140, 130;
+  --dmo-glass-tint: 224, 255, 250;
+  --dmo-glass-tint-2: 216, 253, 248;
+  --dmo-brand: #00d2be;
+  --dmo-brand-soft: #6bffe8;
+  --dmo-brand-deep: #00998c;
+  --dmo-glass: rgba(250, 255, 254, 0.94);
+  --dmo-glass-2: rgba(238, 255, 253, 0.97);
+  --dmo-spec-base: rgba(120, 255, 235, 0.34);
+  --dmo-spec-low: rgba(0, 235, 210, 0.62);
+  --dmo-spec-high: rgba(235, 255, 252, 0.99);
+  --dmo-spec-glow: rgba(0, 255, 220, 0.78);
+}
+
+[data-dmo-theme='mono'] {
+  --dmo-rgb: 120, 124, 132;
+  --dmo-rgb-deep: 48, 52, 58;
+  --dmo-rgb-deeper: 75, 85, 99;
+  --dmo-glass-tint: 242, 243, 245;
+  --dmo-glass-tint-2: 236, 238, 241;
+  --dmo-brand: #6b7280;
+  --dmo-brand-soft: #9aa1ab;
+  --dmo-brand-deep: #4b5563;
+  --dmo-glass: rgba(255, 255, 255, 0.94);
+  --dmo-glass-2: rgba(246, 247, 248, 0.97);
+  --dmo-spec-base: rgba(190, 195, 202, 0.32);
+  --dmo-spec-low: rgba(150, 156, 165, 0.6);
+  --dmo-spec-high: rgba(252, 252, 253, 0.98);
+  --dmo-spec-glow: rgba(160, 168, 178, 0.7);
+}
+
+/*
+ * 系统级深色兜底（宿主未显式声明主题时生效）。
+ *
+ * 只覆盖「前景 / 玻璃 / 描边透明度」这三类，**不覆盖色相**：
+ * 色相由主题块决定，深色只是把它换成深玻璃与更高的描边透明度。
+ * 早先这里写死了蓝色系的 spec 色板，导致换成薄荷/落日主题后频谱仍是蓝的。
+ */
 @media (prefers-color-scheme: dark) {
   .dmo-dock-stack,
   .dmo-card,
-  .dmo-embed {
-    --dmo-fg: #eaf1ff;
-    --dmo-fg-dim: #a8bae0;
-    --dmo-fg-faint: #8f9fc4;
-    --dmo-line: rgba(120, 160, 255, 0.24);
-    --dmo-hover: rgba(120, 160, 255, 0.12);
-    --dmo-sunken: rgba(120, 160, 255, 0.09);
+  .dmo-embed,
+  .dmo-settings {
+    --dmo-fg: #eef3ff;
+    --dmo-fg-dim: #a8b4cf;
+    --dmo-fg-faint: #8b96b3;
+    --dmo-line: rgba(var(--dmo-rgb), 0.3);
+    --dmo-hover: rgba(var(--dmo-rgb), 0.16);
+    --dmo-sunken: rgba(var(--dmo-rgb), 0.12);
     --dmo-glass: rgba(20, 28, 48, 0.94);
     --dmo-glass-2: rgba(26, 36, 60, 0.96);
-    --dmo-edge: rgba(120, 160, 255, 0.3);
-    --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-    --dmo-halo: rgba(80, 120, 255, 0.34);
-    /* 深色主题下柱顶不能是纯白，否则在深蓝背景上炸开；改用略带蓝的亮白。 */
-    --dmo-spec-base: rgba(130, 180, 255, 0.3);
-    --dmo-spec-low: rgba(100, 160, 255, 0.55);
-    --dmo-spec-high: rgba(226, 240, 255, 0.96);
-    --dmo-spec-glow: rgba(110, 175, 255, 0.8);
+    --dmo-edge: rgba(var(--dmo-rgb), 0.42);
+    --dmo-edge-strong: rgba(var(--dmo-rgb), 0.66);
+    --dmo-halo: rgba(var(--dmo-rgb), 0.36);
   }
 }
 
@@ -944,22 +1078,19 @@ export const CSS_TEXT = `
  */
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-dock-stack,
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-card,
-:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-embed {
-  --dmo-fg: #eaf1ff;
-  --dmo-fg-dim: #a8bae0;
-  --dmo-fg-faint: #8f9fc4;
-  --dmo-line: rgba(120, 160, 255, 0.24);
-  --dmo-hover: rgba(120, 160, 255, 0.12);
-  --dmo-sunken: rgba(120, 160, 255, 0.09);
+:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-embed,
+:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-settings {
+  --dmo-fg: #eef3ff;
+  --dmo-fg-dim: #a8b4cf;
+  --dmo-fg-faint: #8b96b3;
+  --dmo-line: rgba(var(--dmo-rgb), 0.3);
+  --dmo-hover: rgba(var(--dmo-rgb), 0.16);
+  --dmo-sunken: rgba(var(--dmo-rgb), 0.12);
   --dmo-glass: rgba(20, 28, 48, 0.94);
   --dmo-glass-2: rgba(26, 36, 60, 0.96);
-  --dmo-edge: rgba(120, 160, 255, 0.3);
-  --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-  --dmo-halo: rgba(80, 120, 255, 0.34);
-  --dmo-spec-base: rgba(130, 180, 255, 0.3);
-  --dmo-spec-low: rgba(100, 160, 255, 0.55);
-  --dmo-spec-high: rgba(226, 240, 255, 0.96);
-  --dmo-spec-glow: rgba(110, 175, 255, 0.8);
+  --dmo-edge: rgba(var(--dmo-rgb), 0.42);
+  --dmo-edge-strong: rgba(var(--dmo-rgb), 0.66);
+  --dmo-halo: rgba(var(--dmo-rgb), 0.36);
 }
 
 .dmo-card {
@@ -970,14 +1101,14 @@ export const CSS_TEXT = `
   padding: 12px;
   /* 与胶囊同一套语言：冷白玻璃 + 鲸蓝描边 + 外圈蓝雾。
    * 顶部还有一道极细的高光（::before），让它有厚度而不是一片纯色。 */
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(232, 241, 255, 0.78)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(var(--dmo-glass-tint-2, 232, 241, 255), 0.78)),
     var(--dmo-glass, rgba(255, 255, 255, 0.94));
   box-shadow:
-    0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26)),
-    0 18px 44px rgba(38, 74, 176, 0.26),
+    0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26)),
+    0 18px 44px rgba(var(--dmo-rgb-deep, 38, 74, 176), 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(18px) saturate(1.1);
   max-height: min(560px, calc(100vh - 120px));
@@ -1002,8 +1133,8 @@ export const CSS_TEXT = `
 @media (prefers-color-scheme: dark) {
   .dmo-card {
     background:
-      linear-gradient(180deg, rgba(34, 46, 76, 0.92), rgba(20, 28, 48, 0.9)),
-      var(--dmo-glass, rgba(20, 28, 48, 0.94));
+      linear-gradient(180deg, rgba(var(--dmo-rgb-dark, 34, 46, 76), 0.92), rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.9)),
+      var(--dmo-glass, rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.94));
     box-shadow:
       0 0 0 3px var(--dmo-halo, rgba(80, 120, 255, 0.34)),
       0 18px 44px rgba(0, 0, 0, 0.5),
@@ -1013,8 +1144,8 @@ export const CSS_TEXT = `
 
 :where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-card {
   background:
-    linear-gradient(180deg, rgba(34, 46, 76, 0.92), rgba(20, 28, 48, 0.9)),
-    var(--dmo-glass, rgba(20, 28, 48, 0.94));
+    linear-gradient(180deg, rgba(var(--dmo-rgb-dark, 34, 46, 76), 0.92), rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.9)),
+    var(--dmo-glass, rgba(var(--dmo-rgb-dark-2, 20, 28, 48), 0.94));
   box-shadow:
     0 0 0 3px var(--dmo-halo, rgba(80, 120, 255, 0.34)),
     0 18px 44px rgba(0, 0, 0, 0.5),
@@ -1105,7 +1236,7 @@ export const CSS_TEXT = `
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 1px solid var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 50%;
   /* 主按钮：鲸蓝实心 + 外圈光晕。这是整个卡片里唯一的强色块，
    * 用户的视线第一秒要能落在它上面。 */
@@ -1113,13 +1244,13 @@ export const CSS_TEXT = `
   color: #fff;
   font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(77, 107, 254, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 14px rgba(var(--dmo-rgb, 77, 107, 254), 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .dmo-play:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(77, 107, 254, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6px 18px rgba(var(--dmo-rgb, 77, 107, 254), 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .dmo-play:disabled {
@@ -1157,14 +1288,14 @@ export const CSS_TEXT = `
     linear-gradient(90deg,
       var(--dmo-brand, #4d6bfe) 0,
       var(--dmo-brand-soft, #7b95ff) var(--dmo-seek-p, 0%),
-      rgba(77, 107, 254, 0.18) var(--dmo-seek-p, 0%),
-      rgba(77, 107, 254, 0.18) 100%);
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.18) var(--dmo-seek-p, 0%),
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.18) 100%);
 }
 
 .dmo-seek::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: rgba(77, 107, 254, 0.18);
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.18);
 }
 
 .dmo-seek::-moz-range-progress {
@@ -1182,7 +1313,7 @@ export const CSS_TEXT = `
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--dmo-brand, #4d6bfe);
-  box-shadow: 0 1px 4px rgba(77, 107, 254, 0.5);
+  box-shadow: 0 1px 4px rgba(var(--dmo-rgb, 77, 107, 254), 0.5);
 }
 
 .dmo-seek::-moz-range-thumb {
@@ -1191,7 +1322,7 @@ export const CSS_TEXT = `
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--dmo-brand, #4d6bfe);
-  box-shadow: 0 1px 4px rgba(77, 107, 254, 0.5);
+  box-shadow: 0 1px 4px rgba(var(--dmo-rgb, 77, 107, 254), 0.5);
 }
 
 .dmo-seek:disabled {
@@ -1231,7 +1362,7 @@ export const CSS_TEXT = `
   border-radius: 50%;
   background:
     conic-gradient(from -135deg,
-      rgba(77, 107, 254, 0.14) 0deg 270deg,
+      rgba(var(--dmo-rgb, 77, 107, 254), 0.14) 0deg 270deg,
       transparent 270deg 360deg);
 }
 
@@ -1253,7 +1384,7 @@ export const CSS_TEXT = `
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 50%;
   background: linear-gradient(160deg, #ffffff, #eef2ff);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(20, 22, 26, 0.16);
@@ -1294,7 +1425,7 @@ export const CSS_TEXT = `
 }
 
 .dmo-knob:hover .dmo-knob-cap {
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-mixer {
@@ -1318,70 +1449,35 @@ export const CSS_TEXT = `
 .dmo-chip {
   flex: none;
   padding: 2px 8px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 999px;
-  background: rgba(77, 107, 254, 0.06);
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.06);
   color: var(--dmo-fg-dim);
   font: inherit;
   font-size: 11px;
   cursor: pointer;
+  /* 循环按钮的文字是「列表循环/单曲循环/不循环」，比原先的裸枚举 all 长得多。
+     不锁不换行的话，走带行空间紧张时会被压成两行、把整行撑高。 */
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 循环模式换档时给一点状态色，让「现在是哪种循环」不用凑近看字。 */
+.dmo-chip[data-loop='one'] {
+  color: var(--dmo-brand-deep, #2f4bd8);
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.12);
+}
+
+.dmo-chip[data-loop='off'] {
+  opacity: 0.72;
 }
 
 .dmo-chip:hover {
   color: var(--dmo-brand-deep, #2f4bd8);
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
-  background: rgba(77, 107, 254, 0.12);
-}
-
-/* ---------- 音景一排（卡片内的七条自带音景） ---------- */
-.dmo-soundscapes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.dmo-soundscapes-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--dmo-fg-dim);
-  font: inherit;
-  font-size: 11.5px;
-  cursor: pointer;
-}
-
-.dmo-soundscapes-head:hover {
-  color: var(--dmo-brand-deep, #2f4bd8);
-}
-
-.dmo-soundscapes-caret {
-  width: 9px;
-  font-size: 9px;
-  opacity: 0.75;
-}
-
-.dmo-soundscapes-title {
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.dmo-soundscapes-count {
-  min-width: 16px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--dmo-hover);
-  color: var(--dmo-brand, #4d6bfe);
-  font-size: 10px;
-  text-align: center;
-}
-
-.dmo-soundscapes-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.12);
 }
 
 /* ---------- 链接输入 ---------- */
@@ -1394,7 +1490,7 @@ export const CSS_TEXT = `
   flex: 1;
   min-width: 0;
   padding: 6px 9px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.72);
   color: inherit;
@@ -1415,7 +1511,7 @@ export const CSS_TEXT = `
 .dmo-btn {
   flex: none;
   padding: 6px 12px;
-  border: 1px solid var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border: 1px solid var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.6);
   color: inherit;
@@ -1426,15 +1522,15 @@ export const CSS_TEXT = `
 }
 
 .dmo-btn:hover:not(:disabled) {
-  background: rgba(77, 107, 254, 0.1);
-  border-color: var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  background: rgba(var(--dmo-rgb, 77, 107, 254), 0.1);
+  border-color: var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
 }
 
 .dmo-primary {
   border-color: transparent;
   background: linear-gradient(160deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
   color: #fff;
-  box-shadow: 0 3px 12px rgba(77, 107, 254, 0.34);
+  box-shadow: 0 3px 12px rgba(var(--dmo-rgb, 77, 107, 254), 0.34);
 }
 
 .dmo-primary:hover:not(:disabled) {
@@ -1452,7 +1548,7 @@ export const CSS_TEXT = `
   margin-left: 4px;
   color: var(--dmo-fg-dim);
   border-style: dashed;
-  border-color: var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  border-color: var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
 }
 
 .dmo-selfcheck:hover:not(:disabled) {
@@ -1544,7 +1640,7 @@ export const CSS_TEXT = `
 }
 
 .dmo-queue-row--active {
-  background: var(--dsw-alias-bg-active, rgba(77, 107, 254, 0.12));
+  background: var(--dsw-alias-bg-active, rgba(var(--dmo-rgb, 77, 107, 254), 0.12));
 }
 
 .dmo-queue-index {
@@ -1650,9 +1746,9 @@ export const CSS_TEXT = `
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px dashed var(--dmo-edge-strong, rgba(77, 107, 254, 0.5));
+  border: 2px dashed var(--dmo-edge-strong, rgba(var(--dmo-rgb, 77, 107, 254), 0.5));
   border-radius: 14px;
-  background: var(--dmo-hover, rgba(77, 107, 254, 0.08));
+  background: var(--dmo-hover, rgba(var(--dmo-rgb, 77, 107, 254), 0.08));
   color: var(--dmo-brand, #4d6bfe);
   font-size: 12px;
   font-weight: 600;
@@ -1692,20 +1788,25 @@ export const CSS_TEXT = `
 /* ---------- 底部通栏频谱 ---------- */
 .dmo-barspectrum {
   position: fixed;
-  left: 0;
-  right: 0;
+  /* 宽度走 --dmo-span（设置项 spectrumSpan，20-100%）：
+   * left 用 calc 算出居中偏移，right 置 auto —— 若同时留 left/right，
+   * width 会被忽略，带子永远满宽，「频谱太短」的另一半也修不好。 */
+  left: calc((100% - var(--dmo-span, 80%)) / 2);
+  right: auto;
+  width: var(--dmo-span, 80%);
   bottom: 0;
   /* 高度由 ShellDock 内联注入（设置项 spectrumHeight），这里只留兜底值 */
   height: 64px;
   opacity: 0.92;
   pointer-events: none;
   z-index: 0;
-  transition: opacity 0.28s ease, filter 0.28s ease;
-  /* 底沿一层极淡的蓝雾，把整条频谱托住，不让它在页面底边「飘着」。 */
-  background: linear-gradient(180deg, transparent 0%, rgba(77, 107, 254, 0.06) 60%, rgba(77, 107, 254, 0.12) 100%);
+  transition: opacity 0.28s ease, filter 0.28s ease, width 0.18s ease, left 0.18s ease;
+  /* 底沿一层极淡的同色雾，把整条频谱托住，不让它在页面底边「飘着」。 */
+  background: linear-gradient(180deg, transparent 0%, rgba(var(--dmo-rgb), 0.06) 60%, rgba(var(--dmo-rgb), 0.12) 100%);
 }
 
-/* 两侧竖向边界线：用户参考图里的那两道「框」，让频谱读起来是一条被框住的带子。 */
+/* 两侧竖向边界线：用户参考图里的那两道「框」，让频谱读起来是一条被框住的带子。
+ * 贴在带子自己的两侧（0），不是视口两侧 —— 带子收窄后仍要贴着内容边界。 */
 .dmo-barspectrum::before,
 .dmo-barspectrum::after {
   content: '';
@@ -1717,8 +1818,8 @@ export const CSS_TEXT = `
   opacity: 0.55;
 }
 
-.dmo-barspectrum::before { left: 18px; }
-.dmo-barspectrum::after { right: 18px; }
+.dmo-barspectrum::before { left: 0; }
+.dmo-barspectrum::after { right: 0; }
 
 /*
  * 层级二选一（设置项 spectrumDepth）：
@@ -1851,63 +1952,28 @@ export const CSS_TEXT = `
  * 因此不能只抄卡片的配色锚点 —— 必须自带一套前景与描边，
  * 否则浅色主题下同样会出现「字和底同一亮度」。
  * 这里只固定前景色与分隔线，背景保持透明让宿主底板透出来。
+ *
+ * 颜色令牌一律不在这里重复定义：.dmo-settings 已并入文件上方那段共享令牌块
+ * 与主题块的选择器列表。早先它自己硬编码了一整套（--dmo-brand: #4d6bfe 等），
+ * 又排在那 7 个主题块之后，于是设置页永远显示鲸鱼蓝、换主题只改播放器不改设置页。
  */
 .dmo-settings {
-  --dmo-fg: #16233f;
-  --dmo-fg-dim: #45557a;
-  --dmo-fg-faint: #5a6c92;
-  --dmo-line: rgba(77, 107, 254, 0.18);
-  --dmo-hover: rgba(77, 107, 254, 0.08);
-  --dmo-sunken: rgba(77, 107, 254, 0.06);
-  --dmo-brand: #4d6bfe;
-  --dmo-brand-soft: #7b95ff;
-  --dmo-brand-deep: #2f4bd8;
-  --dmo-glass: rgba(255, 255, 255, 0.94);
-  --dmo-edge: rgba(77, 107, 254, 0.28);
-  --dmo-edge-strong: rgba(77, 107, 254, 0.5);
-  --dmo-halo: rgba(77, 107, 254, 0.26);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 2px 0 8px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--dmo-line);
+  border-radius: 14px;
+  /* 必须自带底色。设置分区是别人的弹窗里的一块「外来内容」，宿主那层是半透明的，
+   * 早前这里没写 background，于是 --dmo-fg-faint(#5a6c92) 直接落在宿主的
+   * rgba(132,122,98,0.5) 面板上 —— 实测对比度只有 2.0:1，11.5px 的说明文字
+   * 在真机上几乎读不出来（截图里「长期保留的链接…」那行几乎和背景同色）。
+   * 用与卡片同一套玻璃令牌，深色块会把 --dmo-glass-2 翻成深玻璃，两边都自洽。 */
+  background: var(--dmo-glass-2, rgba(243, 248, 255, 0.97));
   container-type: inline-size;
   color: var(--dmo-fg);
   font-size: 13px;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .dmo-settings {
-    --dmo-fg: #eaf1ff;
-    --dmo-fg-dim: #a8bae0;
-    --dmo-fg-faint: #8f9fc4;
-    --dmo-line: rgba(120, 160, 255, 0.24);
-    --dmo-hover: rgba(120, 160, 255, 0.12);
-    --dmo-sunken: rgba(120, 160, 255, 0.09);
-    --dmo-glass: rgba(20, 28, 48, 0.94);
-    --dmo-edge: rgba(120, 160, 255, 0.3);
-    --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-    --dmo-brand: #8aa6ff;
-    --dmo-brand-soft: #b9ccff;
-    --dmo-brand-deep: #5c7cff;
-    --dmo-halo: rgba(80, 120, 255, 0.34);
-  }
-}
-
-:where([data-theme='dark'], [data-color-scheme='dark'], .dark) .dmo-settings {
-  --dmo-fg: #eaf1ff;
-  --dmo-fg-dim: #a8bae0;
-  --dmo-fg-faint: #8f9fc4;
-  --dmo-line: rgba(120, 160, 255, 0.24);
-  --dmo-hover: rgba(120, 160, 255, 0.12);
-  --dmo-sunken: rgba(120, 160, 255, 0.09);
-  --dmo-glass: rgba(20, 28, 48, 0.94);
-  --dmo-edge: rgba(120, 160, 255, 0.3);
-  --dmo-edge-strong: rgba(140, 176, 255, 0.55);
-  --dmo-brand: #8aa6ff;
-  --dmo-brand-soft: #b9ccff;
-  --dmo-brand-deep: #5c7cff;
-  --dmo-halo: rgba(80, 120, 255, 0.34);
 }
 
 .dmo-settings-head {
@@ -2058,7 +2124,7 @@ export const CSS_TEXT = `
   border-radius: 50%;
   background: linear-gradient(180deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
   border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(77, 107, 254, 0.28)), 0 0 8px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28)), 0 0 8px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
   cursor: pointer;
 }
 
@@ -2068,12 +2134,12 @@ export const CSS_TEXT = `
   border: 2px solid #fff;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--dmo-brand-soft, #7b95ff), var(--dmo-brand, #4d6bfe));
-  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(77, 107, 254, 0.28));
+  box-shadow: 0 0 0 1px var(--dmo-edge, rgba(var(--dmo-rgb, 77, 107, 254), 0.28));
   cursor: pointer;
 }
 
 .dmo-range:focus-visible {
-  box-shadow: 0 0 0 3px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 0 3px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
 }
 
 .dmo-range-value {
@@ -2134,7 +2200,7 @@ export const CSS_TEXT = `
 
 .dmo-switch:checked {
   background: linear-gradient(90deg, var(--dmo-brand-deep, #2f4bd8), var(--dmo-brand-soft, #7b95ff));
-  box-shadow: 0 0 8px var(--dmo-halo, rgba(77, 107, 254, 0.26));
+  box-shadow: 0 0 8px var(--dmo-halo, rgba(var(--dmo-rgb, 77, 107, 254), 0.26));
 }
 
 .dmo-switch:checked::after {

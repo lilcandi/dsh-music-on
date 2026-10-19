@@ -120,7 +120,7 @@ test('收藏按钮必须挂在卡片头部（用户要能在播放时就地收�
 });
 
 test('收藏地址一律取 track.pageUrl，绝不直接存 track.url', () => {
-  // track.url 可能是 blob: / 相对路径（预置音景）/ 播放器壳，存进收藏重启必然打不开。
+  // track.url 可能是 blob: / 相对路径 / 播放器壳，存进收藏重启必然打不开。
   assert.ok(dockSrc.includes('function currentPageUrl'), '缺 currentPageUrl 取值函数');
   assert.ok(/currentPageUrl\(engine\)/.test(dockSrc), '收藏状态没走 currentPageUrl');
   assert.ok(sourcesSrc.includes('export function trackPageUrl'), 'sources.js 缺 trackPageUrl');

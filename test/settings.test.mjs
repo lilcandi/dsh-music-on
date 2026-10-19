@@ -13,8 +13,6 @@ import test from 'node:test';
 
 import {
   AUTOPLAY_TARGETS,
-  CACHE_LIMIT_MAX_MB,
-  CACHE_LIMIT_MIN_MB,
   DEFAULT_SETTINGS,
   DOCK_SIZES,
   LOOP_MODES,
@@ -22,6 +20,7 @@ import {
   SPECTRUM_GLOWS,
   SPECTRUM_PLACEMENTS,
   SPECTRUM_STYLES,
+  THEMES,
   defaultSettings,
   normalizeSettings,
 } from '../src/client/settings.js';
@@ -63,10 +62,10 @@ test('空输入 / 垃圾输入退到默认值，不抛错', () => {
   }
 });
 
-test('频谱柱数按 8 对齐并夹在 16-96', () => {
+test('频谱柱数按 8 对齐并夹在 16-160', () => {
   assert.equal(normalizeSettings({ spectrumBars: 50 }).spectrumBars, 48);
   assert.equal(normalizeSettings({ spectrumBars: 1 }).spectrumBars, 16);
-  assert.equal(normalizeSettings({ spectrumBars: 999 }).spectrumBars, 96);
+  assert.equal(normalizeSettings({ spectrumBars: 999 }).spectrumBars, 160);
   assert.equal(normalizeSettings({ spectrumBars: '24' }).spectrumBars, 24);
 });
 
@@ -76,10 +75,10 @@ test('频谱灵敏度夹在 0.5-4 并保留一位小数', () => {
   assert.equal(normalizeSettings({ spectrumGain: 2.34 }).spectrumGain, 2.3);
 });
 
-test('频谱高度按 8 对齐并夹在 32-160', () => {
+test('频谱高度按 8 对齐并夹在 32-200', () => {
   assert.equal(normalizeSettings({ spectrumHeight: 33 }).spectrumHeight, 32);
   assert.equal(normalizeSettings({ spectrumHeight: 100 }).spectrumHeight, 104);
-  assert.equal(normalizeSettings({ spectrumHeight: 9999 }).spectrumHeight, 160);
+  assert.equal(normalizeSettings({ spectrumHeight: 9999 }).spectrumHeight, 200);
 });
 
 test('枚举型设置遇到非法值一律回落默认', () => {
@@ -100,12 +99,33 @@ test('枚举型设置遇到非法值一律回落默认', () => {
 });
 
 test('枚举白名单本身没写错', () => {
-  assert.deepEqual(SPECTRUM_STYLES, ['dots', 'bars', 'line', 'wave', 'off']);
+  assert.deepEqual(SPECTRUM_STYLES, ['dots', 'bars', 'line', 'wave', 'blocks', 'mirror', 'off']);
   assert.deepEqual(SPECTRUM_GLOWS, ['off', 'soft', 'strong']);
   assert.deepEqual(SPECTRUM_PLACEMENTS, ['bar', 'panel']);
   assert.deepEqual(LOOP_MODES, ['all', 'one', 'off']);
   assert.deepEqual(DOCK_SIZES, ['compact', 'normal', 'wide']);
   assert.deepEqual(AUTOPLAY_TARGETS, ['both', 'link', 'file', 'off']);
+  assert.deepEqual(THEMES, ['whale', 'aurora', 'mint', 'sunset', 'rose', 'neon', 'mono']);
+});
+
+test('频谱宽度与柱数的边界都会夹住并对齐', () => {
+  // 宽度按 5 对齐：滑杆 step=5，落出 63 会让滑杆显示与真实值错开。
+  assert.equal(normalizeSettings({ spectrumSpan: 63 }).spectrumSpan, 65);
+  assert.equal(normalizeSettings({ spectrumSpan: 999 }).spectrumSpan, 100);
+  assert.equal(normalizeSettings({ spectrumSpan: -10 }).spectrumSpan, 20);
+  assert.equal(normalizeSettings({}).spectrumSpan, DEFAULT_SETTINGS.spectrumSpan);
+  // 柱数按 8 对齐、上界抬到 160。
+  assert.equal(normalizeSettings({ spectrumBars: 999 }).spectrumBars, 160);
+  assert.equal(normalizeSettings({ spectrumBars: 150 }).spectrumBars, 152);
+  assert.equal(normalizeSettings({ spectrumBars: 1 }).spectrumBars, 16);
+  // 高度上界从 160 抬到 200。
+  assert.equal(normalizeSettings({ spectrumHeight: 999 }).spectrumHeight, 200);
+});
+
+test('主题名非法时退回 whale', () => {
+  assert.equal(normalizeSettings({ theme: 'aurora' }).theme, 'aurora');
+  assert.equal(normalizeSettings({ theme: 'nope' }).theme, 'whale');
+  assert.equal(normalizeSettings({}).theme, 'whale');
 });
 
 test('布尔项的字符串写法能被识别', () => {
@@ -119,11 +139,6 @@ test('切歌淡入淡出夹在 0-12 秒且取整', () => {
   assert.equal(normalizeSettings({ crossfadeSec: 99 }).crossfadeSec, 12);
   assert.equal(normalizeSettings({ crossfadeSec: -5 }).crossfadeSec, 0);
   assert.equal(normalizeSettings({ crossfadeSec: 3.7 }).crossfadeSec, 4);
-});
-
-test('缓存上限夹在 64-4096', () => {
-  assert.equal(normalizeSettings({ cacheLimitMB: 1 }).cacheLimitMB, CACHE_LIMIT_MIN_MB);
-  assert.equal(normalizeSettings({ cacheLimitMB: 99999 }).cacheLimitMB, CACHE_LIMIT_MAX_MB);
 });
 
 test('音量夹在 0-1', () => {

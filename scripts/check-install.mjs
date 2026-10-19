@@ -17,23 +17,20 @@ const SRC = 'J:\\plugin\\dsh-music-on';
 const RUNTIME_FILES = [
   'index.js', 'client.js', 'package.json', 'cordis.patch.yml',
   'src/index.js', 'src/shared.js',
-  'src/host/resolve.js', 'src/host/stream.js', 'src/host/presets-static.js',
+  'src/host/resolve.js', 'src/host/stream.js',
   // mediatoken 是平台直链的票据层：resolve 签发、stream 验签，两条路由共用
   // 同一把私钥。这个文件漏进清单时，自检全绿而「粘贴网易云/QQ 链接」在浏览器里
   // 静默退回只跳转 —— 与 linkintake/library 同一类陷阱。
   'src/host/mediatoken.js',
   'src/client/register.js', 'src/client/engine.js', 'src/client/sources.js',
-  'src/client/presets.js', 'src/client/presets-boot.js', 'src/client/settings.js',
+  'src/client/settings.js',
   'src/client/parser.js', 'src/client/styles.js', 'src/client/locale.js',
   // linkintake 是「粘贴链接」的分流器，library 是收藏/历史的存储层。
   // 这两个文件漏进清单时安装自检照常全绿，而功能在浏览器里静默消失 —— 必须列进来。
   'src/client/linkintake.js', 'src/client/library.js',
   'src/client/ui/PlayerPanel.jsx', 'src/client/ui/Spectrum.jsx',
-  'src/client/ui/Settings.jsx', 'src/client/ui/PresetsSection.jsx',
+  'src/client/ui/Settings.jsx',
   'src/client/ui/ShellDock.js', 'src/client/ui/LibrarySection.jsx',
-  'presets/manifest.json',
-  'presets/white-noise.wav', 'presets/rain.wav', 'presets/cafe.wav',
-  'presets/cafe-night.wav', 'presets/beat.wav', 'presets/jazz.wav', 'presets/lofi.wav',
 ];
 
 let fail = 0;
@@ -52,7 +49,8 @@ for (const rel of RUNTIME_FILES) {
 if (fail === 0) ok('运行时文件齐全', `${RUNTIME_FILES.length} 个`);
 
 // ---- 2. 没有递归复制造成的嵌套重复目录 ----
-const NESTED = ['src/src', 'src/presets', 'presets/presets', 'presets/src'];
+// src/presets 那条随音景目录一起删了 —— 目录已不存在，断言恒真等于没有断言。
+const NESTED = ['src/src', 'src/client/src'];
 const nestedFound = NESTED.filter((d) => existsSync(join(INSTALL, d)));
 nestedFound.length === 0 ? ok('无嵌套重复目录') : bad('嵌套重复目录', nestedFound.join(', '));
 
@@ -64,9 +62,14 @@ try {
   if (!Array.isArray(mod.inject)) problems.push('inject 非数组');
   if (typeof mod.apply !== 'function') problems.push('apply 非函数');
   const routes = mod.routes ?? {};
-  for (const k of ['resolve', 'stream', 'presets']) {
+  for (const k of ['resolve', 'stream']) {
     if (typeof routes[k] !== 'string') problems.push(`routes.${k} 缺失`);
   }
+  // 音景整体移除后，注入清单里不该再有 webServer：宿主会一直等一个
+  // 本插件根本用不到的服务，表现为启动日志里一条 pending。
+  if (mod.inject.includes('webServer')) problems.push('inject 仍含 webServer');
+  // routes 只剩两条。presets 那条若还留着，宿主会挂一条指向已删模块的路由。
+  if ('presets' in routes) problems.push('routes 仍含 presets');
   problems.length === 0
     ? ok('宿主半边 import', `inject=${JSON.stringify(mod.inject)}`)
     : bad('宿主半边 import', problems.join('; '));
@@ -83,8 +86,11 @@ if (!existsSync(bundlePath)) {
   const rules = {
     'ModuleLoader 包装': text.includes('__ModuleLoader__'),
     '相对 require 已内联': !/require\(\s*["'`]\.\.?\//.test(text),
-    '音景分区已接线': text.includes('dmo-presets'),
-    'presets 路由已接线': text.includes('/api/dsh-music-on/presets/'),
+    // 音景功能已整体移除：旧的自检只查 'dmo-presets' 这个从未存在过的类名，
+    // 任何残留都能蒙过去。真实删掉的是 dmo-soundscapes 一族与静态路由前缀。
+    '音景分区已移除': !text.includes('dmo-soundscapes')
+      && !text.includes('data-preset-id')
+      && !text.includes('/api/dsh-music-on/presets'),
     '频谱组件已进包': /Spectrum|dmo-spectrum/.test(text),
     // 设置分区是槽位名 + PLUGIN_ID 注册，SETTINGS_SECTION_ID 常量未必进 bundle，
     // 断言槽位字面量本身才是真的接线证据。
@@ -94,6 +100,10 @@ if (!existsSync(bundlePath)) {
     '右下角音乐库槽位已注册': text.includes('shell.overlay'),
     '音乐库组件已进包': /dmo-dock|dmo-capsule/.test(text),
     '频谱位置设置已进包': text.includes('spectrumPlacement'),
+    // 频谱宽度与主题是「可改变长度」和「更多主题色」两条需求的落地证据：
+    // 只加设置项不加消费方，滑块拉到底画面纹丝不动 —— 这两条必须真进包。
+    '频谱宽度设置已进包': text.includes('spectrumSpan'),
+    '主题切换已进包': text.includes('data-dmo-theme') || text.includes('dataDmoTheme'),
     // 收藏/历史：存储键字面量必须进包，否则「设置页那两块是空的」会毫无提示。
     '收藏与历史存储键已进包': text.includes('dsh-music-on:favorites.v1') && text.includes('dsh-music-on:history.v1'),
     '收藏历史组件已进包': /LibrarySection|dmo-lib/.test(text),
